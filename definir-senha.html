@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Definir senha - Radar de Licitações</title>
+<style>
+  :root {
+    --bg: #fafaf9; --surface: #ffffff; --border: #e7e5e4;
+    --text: #1c1917; --muted: #78716c;
+    --accent: #15803d; --danger: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 32px; width: 360px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .box h2 { margin: 0 0 4px; font-size: 18px; }
+  .box p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+  .box label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; margin-top: 12px; }
+  .box input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+  .box button { width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  .box button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .msg { font-size: 13px; margin-top: 14px; min-height: 18px; }
+  .msg.err { color: var(--danger); }
+  .msg.ok { color: var(--accent); }
+  a.link { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h2>Definir senha</h2>
+    <p class="sub">Radar de Licitações — Cherpinski Engenharia</p>
+
+    <div id="form" style="display:none">
+      <label for="p1">Nova senha</label>
+      <input id="p1" type="password" autocomplete="new-password" placeholder="mínimo 8 caracteres">
+      <label for="p2">Confirme a senha</label>
+      <input id="p2" type="password" autocomplete="new-password" placeholder="repita a senha">
+      <button id="btn">Salvar senha</button>
+    </div>
+
+    <div id="loading">Validando seu link de acesso...</div>
+    <div id="msg" class="msg"></div>
+  </div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL = 'https://dgfspbqeffhlildpzskh.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZnNwYnFlZmZobGlsZHB6c2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTI3MTMsImV4cCI6MjA5NDc4ODcxM30.ZR1QgmahWCZ4KEqd1UUUNg2n1o5T-ar5VvHXGXiuLAc';
+
+  const RADAR_URL = './';
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { detectSessionInUrl: true, flowType: 'implicit', persistSession: false }
+  });
+
+  const $ = (id) => document.getElementById(id);
+  const loading = $('loading'), form = $('form'), msg = $('msg');
+
+  function mostrarForm() {
+    loading.style.display = 'none';
+    form.style.display = 'block';
+  }
+  function erro(texto) {
+    loading.style.display = 'none';
+    msg.className = 'msg err';
+    msg.textContent = texto;
+  }
+
+  let sessaoPronta = false;
+  sb.auth.onAuthStateChange((event, session) => {
+    if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
+      sessaoPronta = true;
+      mostrarForm();
+    }
+  });
+
+  // Fallback: confere a sessão após um instante, caso o evento já tenha passado.
+  setTimeout(async () => {
+    if (sessaoPronta) return;
+    const { data } = await sb.auth.getSession();
+    if (data?.session) { sessaoPronta = true; mostrarForm(); }
+    else erro('Link inválido ou expirado. Solicite um novo acesso.');
+  }, 1500);
+
+  $('btn').addEventListener('click', async () => {
+    const p1 = $('p1').value, p2 = $('p2').value;
+    msg.className = 'msg';
+    msg.textContent = '';
+    if (p1.length < 8) { msg.className = 'msg err'; msg.textContent = 'A senha precisa ter ao menos 8 caracteres.'; return; }
+    if (p1 !== p2) { msg.className = 'msg err'; msg.textContent = 'As senhas não conferem.'; return; }
+
+    $('btn').disabled = true;
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) {
+      $('btn').disabled = false;
+      msg.className = 'msg err';
+      msg.textContent = 'Não foi possível salvar: ' + error.message;
+      return;
+    }
+    msg.className = 'msg ok';
+    msg.innerHTML = 'Senha definida com sucesso. <a class="link" href="' + RADAR_URL + '">Entrar no radar</a>.';
+    form.style.display = 'none';
+    await sb.auth.signOut();
+  });
+</script>
+</body>
+</html>
