@@ -898,13 +898,16 @@ function buildDetail(r) {
     { label: 'Atualizada na fonte', val: r.atualizada_em_fonte ? new Date(r.atualizada_em_fonte).toLocaleDateString('pt-BR') : '—' },
     { label: 'Local realização', val: r.local_realizacao },
     { label: 'Cadastro prévio obrigatório', val: r.cadastro_previo_obrigatorio == null ? '—' : (r.cadastro_previo_obrigatorio ? 'Sim' : 'Não') },
-    { label: 'Link edital', val: r.link_edital, full: true },
-    { label: 'Link anexos', val: r.link_anexos, full: true },
+    { label: 'Link edital', val: r.link_edital, full: true, omitIfEmpty: true },
+    { label: 'Link anexos', val: r.link_anexos, full: true, omitIfEmpty: true },
     { label: 'Observação', val: r.observacao, full: true },
   ];
-  const html = fields.map(f =>
-    `<div class="detail-field ${f.full ? 'full' : ''}"><label>${esc(f.label)}</label><p>${esc(f.val || '—')}</p></div>`
-  ).join('');
+  // Campos de link só aparecem quando há valor (a RPC não devolve esses links para alunos).
+  const html = fields
+    .filter(f => !(f.omitIfEmpty && (f.val == null || f.val === '')))
+    .map(f =>
+      `<div class="detail-field ${f.full ? 'full' : ''}"><label>${esc(f.label)}</label><p>${esc(f.val || '—')}</p></div>`
+    ).join('');
   return `<div class="detail-grid">${html}</div>`;
 }
 
