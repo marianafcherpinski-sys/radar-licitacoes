@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar de Licitações - Cherpinski Engenharia</title>
+<style>
+  :root {
+    --bg: #fafaf9; --surface: #ffffff; --border: #e7e5e4;
+    --text: #1c1917; --muted: #78716c;
+    --accent: #15803d; --accent-soft: #dcfce7;
+    --warn: #c2410c; --warn-soft: #ffedd5;
+    --info: #1d4ed8; --info-soft: #dbeafe;
+    --danger: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* LOGIN */
+  #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .lock-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 32px; width: 340px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .lock-box h2 { margin: 0 0 4px; font-size: 18px; }
+  .lock-box p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+  .lock-box label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; margin-top: 12px; }
+  .lock-box input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+  .lock-box button { width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  .lock-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .lock-box .err { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 16px; }
+
+  /* HEADER */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  header .right { display: flex; gap: 8px; align-items: center; }
+  header .user-info { font-size: 12px; color: var(--muted); margin-right: 8px; }
+  header button { padding: 7px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  header button:hover { background: var(--bg); }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .stat { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; transition: background 0.15s, border-color 0.15s; }
+  .stat.clickable { cursor: pointer; }
+  .stat.clickable:hover { background: var(--bg); border-color: var(--muted); }
+  .stat.active { background: var(--warn-soft); border-color: var(--warn); }
+  .stat.active .stat-label, .stat.active .stat-value { color: var(--warn); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+
+  /* PRAZO — célula colorida */
+  .prazo-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .prazo-urgente   { color: #b91c1c; font-weight: 600; }
+  .prazo-proximo   { color: #c2410c; font-weight: 600; }
+  .prazo-normal    { color: var(--text); }
+  .prazo-encerrado { color: var(--muted); text-decoration: line-through; }
+  .prazo-sem       { color: #d6d3d1; }
+  .prazo-cell .dias { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+
+  /* Linha com prazo encerrado — apagada */
+  tr.row-encerrada td { opacity: 0.55; }
+  tr.row-encerrada:hover td { opacity: 0.85; }
+
+  /* FILTROS */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .filters input, .filters select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: white; }
+  .filters input[type="search"] { flex: 1; min-width: 220px; }
+  .filters button { padding: 7px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .filters button:hover { background: var(--bg); }
+
+  /* TABELA */
+  .table-wrap { padding: 16px 24px; }
+  .counter { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--text); }
+  th .sort-arrow { color: var(--muted); margin-left: 4px; }
+  th.sorted { color: var(--text); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  tr { cursor: pointer; }
+  tr:hover td { background: #fdfdfc; }
+  tr.expanded td { background: #fafaf9; }
+  tr.detail-row { display: none; }
+  tr.detail-row.open { display: table-row; }
+  tr.detail-row td { background: #fafaf9; padding: 16px 20px; }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .badge-sit-NOVA       { background: var(--info-soft); color: var(--info); }
+  .badge-sit-URGENTE    { background: var(--warn-soft); color: var(--warn); }
+  .badge-sit-ATUALIZADA { background: #f5f5f4; color: var(--muted); }
+  .badge-sit-ANULADA    { background: #fee2e2; color: var(--danger); }
+  .badge-sit-default    { background: #f5f5f4; color: var(--muted); }
+
+  .badge-tipo { display: inline-block; padding: 2px 6px; margin: 2px 4px 2px 0; border-radius: 3px; font-size: 10px; font-weight: 600; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+  .badge-tipo .conf { opacity: 0.6; font-weight: 400; margin-left: 3px; }
+
+  /* SCORE BADGE */
+  .score-badge {
+    display: inline-block;
+    min-width: 36px;
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-alto    { background: #dcfce7; color: #14532d; }   /* 80+ */
+  .score-medio   { background: #dbeafe; color: #1e3a8a; }   /* 60-79 */
+  .score-cinza   { background: #fef3c7; color: #78350f; }   /* 40-59 */
+  .score-baixo   { background: #fee2e2; color: #7f1d1d; }   /* <40 */
+
+  /* MODALIDADE BADGE */
+  .mod-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .mod-credenciamento { background: #ede9fe; color: #5b21b6; }
+  .mod-pregao         { background: #cffafe; color: #155e75; }
+  .mod-dispensa       { background: #fef3c7; color: #78350f; }
+  .mod-chamamento     { background: #fce7f3; color: #831843; }
+  .mod-tomada         { background: #e0e7ff; color: #3730a3; }
+  .mod-concorrencia   { background: #fed7aa; color: #7c2d12; }
+  .mod-licitacao      { background: #d1fae5; color: #065f46; }
+  .mod-outros         { background: #f5f5f4; color: #44403c; }
+
+  .valor-fmt { font-variant-numeric: tabular-nums; }
+  .no-valor { color: #d6d3d1; }
+
+  .expand-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 11px; line-height: 1; }
+  .expand-btn:hover { color: var(--text); }
+
+  /* DETALHE */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 24px; }
+  .detail-field.full { grid-column: 1 / -1; }
+  .detail-field label { display: block; font-size: 10px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 2px; }
+  .detail-field p { margin: 0; font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+
+  /* FOOTER */
+  .footer-actions { padding: 16px 24px; text-align: center; }
+  .footer-actions button { padding: 10px 24px; border: 1px solid var(--border); background: white; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .footer-actions button:hover { background: var(--bg); }
+  .footer-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #loadStatus { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  #emptyState { text-align: center; padding: 40px; color: var(--muted); }
+
+  /* STATUS DROPDOWN (inline na célula) */
+  .status-cell { min-width: 140px; }
+  .status-select {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    width: 100%;
+    background: white;
+    color: var(--text);
+  }
+  .status-select:hover { border-color: var(--muted); }
+  .status-select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .status-select.saving { opacity: 0.5; pointer-events: none; }
+
+  /* cores por status — pintam o fundo do select */
+  .status-select.st-captada              { background: #f5f5f4; color: #44403c; }
+  .status-select.st-triada               { background: var(--info-soft); color: var(--info); }
+  .status-select.st-em_analise           { background: #fef3c7; color: #78350f; }
+  .status-select.st-proposta_enviada     { background: #ede9fe; color: #5b21b6; }
+  .status-select.st-aguardando_resultado { background: #fce7f3; color: #831843; }
+  .status-select.st-ganho                { background: var(--accent-soft); color: var(--accent); }
+  .status-select.st-perdido              { background: #fee2e2; color: var(--danger); }
+  .status-select.st-arquivada            { background: #e7e5e4; color: var(--muted); }
+
+  /* checkbox "mostrar finalizadas" no bloco de filtros */
+  .filters .toggle-finalizadas {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted); cursor: pointer;
+    padding: 0 8px;
+  }
+  .filters .toggle-finalizadas input { margin: 0; cursor: pointer; }
+
+  /* ALERT */
+  .alert { margin: 16px 24px; padding: 12px 16px; background: #fee2e2; border: 1px solid #fecaca; color: var(--danger); border-radius: 6px; font-size: 13px; display: none; }
+  .alert.show { display: block; }
+  .alert.success { background: var(--accent-soft); border-color: #bbf7d0; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="lockScreen">
+  <div class="lock-box">
+    <h2>Radar de Licitações</h2>
+    <p class="sub">Cherpinski Engenharia</p>
+    <label>Email</label>
+    <input type="email" id="emailInput" autocomplete="email" autofocus>
+    <label>Senha</label>
+    <input type="password" id="pwdInput" autocomplete="current-password">
+    <button id="btnLogin" onclick="doLogin()">Entrar</button>
+    <div class="err" id="pwdErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<header>
+  <div>
+    <h1>Radar de Licitações</h1>
+    <div class="sub">Cherpinski Engenharia · Pato Branco/PR</div>
+  </div>
+  <div class="right">
+    <span class="user-info" id="userEmail"></span>
+    <button onclick="reload()">↻ Recarregar</button>
+    <button onclick="doLogout()">Sair</button>
+  </div>
+</header>
+
+<div class="alert" id="alert"></div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-label">Total carregado</div><div class="stat-value" id="statTotal">—</div></div>
+  <div class="stat clickable" id="statProximasBox" onclick="toggleProximas()" title="Clique para filtrar"><div class="stat-label">Próximas (7 dias)</div><div class="stat-value" id="statProximas">—</div></div>
+</div>
+
+<div class="filters">
+  <input type="search" id="search" placeholder="Buscar por objeto, órgão, cidade…">
+  <select id="filtroModalidade"><option value="">Tipo de contratação</option></select>
+  <select id="filtroEstado"><option value="">Todos UF</option></select>
+  <select id="filtroTipo"><option value="">Tipo de serviço</option></select>
+  <select id="filtroPrazo">
+    <option value="">Todos prazos</option>
+    <option value="urgente">Próximos 7 dias</option>
+    <option value="proximo">Próximos 15 dias</option>
+    <option value="ate30">Próximos 30 dias</option>
+    <option value="encerrado">Apenas encerrados</option>
+    <option value="incluir_encerrados">Incluir encerrados</option>
+  </select>
+  <select id="filtroStatus">
+    <option value="">Todos status</option>
+    <option value="captada">Captada</option>
+    <option value="triada">Triada</option>
+    <option value="em_analise">Em análise</option>
+    <option value="proposta_enviada">Proposta enviada</option>
+    <option value="aguardando_resultado">Aguardando resultado</option>
+    <option value="ganho">Ganho</option>
+    <option value="perdido">Perdido</option>
+    <option value="arquivada">Arquivada</option>
+  </select>
+  <label class="toggle-finalizadas">
+    <input type="checkbox" id="mostrarFinalizadas"> Mostrar finalizadas
+  </label>
+  <button onclick="resetFilters()">Limpar</button>
+</div>
+
+<div class="table-wrap">
+  <div class="counter"><span id="countShown">0</span> de <span id="countTotal">0</span> licitações carregadas</div>
+  <table>
+    <thead>
+      <tr>
+        <th data-col="modalidade_calc" onclick="sortBy('modalidade_calc')">Tipo <span class="sort-arrow"></span></th>
+        <th data-col="orgao" onclick="sortBy('orgao')">Órgão <span class="sort-arrow"></span></th>
+        <th data-col="cidade" onclick="sortBy('cidade')">Cidade <span class="sort-arrow"></span></th>
+        <th data-col="uf" onclick="sortBy('uf')">UF <span class="sort-arrow"></span></th>
+        <th>Edital</th>
+        <th data-col="valor_estimado" onclick="sortBy('valor_estimado')">Valor <span class="sort-arrow"></span></th>
+        <th>Tipos serviço</th>
+        <th data-col="data_abertura" onclick="sortBy('data_abertura')">Abertura <span class="sort-arrow"></span></th>
+        <th data-col="prazo_propostas" onclick="sortBy('prazo_propostas')">Prazo <span class="sort-arrow"></span></th>
+        <th data-col="_status" onclick="sortBy('_status')">Status <span class="sort-arrow"></span></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div id="emptyState" style="display:none">Nenhum resultado.</div>
+</div>
+
+<div class="footer-actions">
+  <button id="btnLoadMore" onclick="loadMore()" style="display:none">Carregar mais</button>
+  <div id="loadStatus"></div>
+</div>
+
+</div>
+
+<script>
+// =============================================
+// CONFIG
+// =============================================
+const SUPABASE_URL = 'https://dgfspbqeffhlildpzskh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZnNwYnFlZmZobGlsZHB6c2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTI3MTMsImV4cCI6MjA5NDc4ODcxM30.ZR1QgmahWCZ4KEqd1UUUNg2n1o5T-ar5VvHXGXiuLAc';
+const PAGE_SIZE = 1000;
+const STORAGE_KEY = 'radar_sb_session';
+
+// =============================================
+// STATE
+// =============================================
+let accessToken = null;
+let refreshToken = null;
+let userEmail = null;
+let userId = null;
+
+let rows = [];
+let tiposCatalog = [];
+let orgaos = {};
+let offset = 0;
+let totalCount = null;
+let sortCol = 'prazo_propostas';
+let sortDir = 1;
+let expandedRows = new Set();
+let filtered = [];
+let statusMap = {}; // { licitacao_id: 'captada' | 'triada' | ... }
+let proximasOnly = false; // toggle do stat card "Próximas 7 dias"
+
+// Default visual quando não há registro em licitacao_status_usuario
+const STATUS_DEFAULT = 'captada';
+const STATUS_FINALIZADOS = ['ganho', 'perdido', 'arquivada'];
+const STATUS_LABELS = {
+  captada: 'Captada',
+  triada: 'Triada',
+  em_analise: 'Em análise',
+  proposta_enviada: 'Proposta enviada',
+  aguardando_resultado: 'Aguardando resultado',
+  ganho: 'Ganho',
+  perdido: 'Perdido',
+  arquivada: 'Arquivada'
+};
+
+// =============================================
+// AUTH
+// =============================================
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+function saveSession(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+function clearSession() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+async function doLogin() {
+  const email = document.getElementById('emailInput').value.trim();
+  const pwd = document.getElementById('pwdInput').value;
+  const btn = document.getElementById('btnLogin');
+  const err = document.getElementById('pwdErr');
+  err.textContent = '';
+  if (!email || !pwd) { err.textContent = 'Preencha email e senha.'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password: pwd })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error_description || data.msg || data.error || 'Falha no login');
+    }
+    accessToken = data.access_token;
+    refreshToken = data.refresh_token;
+    userEmail = data.user.email;
+    userId = data.user.id;
+    saveSession({ accessToken, refreshToken, userEmail, userId });
+    enterApp();
+  } catch (e) {
+    err.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function tryRefreshToken() {
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    accessToken = data.access_token;
+    refreshToken = data.refresh_token;
+    userEmail = data.user.email;
+    userId = data.user.id;
+    saveSession({ accessToken, refreshToken, userEmail, userId });
+    return true;
+  } catch { return false; }
+}
+
+function doLogout() {
+  clearSession();
+  accessToken = null; refreshToken = null; userEmail = null; userId = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('lockScreen').style.display = 'flex';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdErr').textContent = '';
+}
+
+function enterApp() {
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('userEmail').textContent = userEmail;
+  init();
+}
+
+document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pwdInput').focus(); });
+
+// =============================================
+// API
+// =============================================
+async function api(path, opts = {}) {
+  if (!accessToken) throw new Error('Sem sessão ativa');
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${accessToken}`,
+      'Prefer': 'count=exact',
+      ...(opts.headers || {})
+    }
+  });
+  if (res.status === 401) {
+    // tenta refresh
+    const ok = await tryRefreshToken();
+    if (ok) return api(path, opts);
+    doLogout();
+    throw new Error('Sessão expirada');
+  }
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`${res.status}: ${txt}`);
+  }
+  const data = await res.json();
+  const cr = res.headers.get('content-range');
+  let total = null;
+  if (cr) {
+    const m = cr.match(/\/(\d+|\*)$/);
+    if (m && m[1] !== '*') total = parseInt(m[1], 10);
+  }
+  return { data, total };
+}
+
+function showAlert(msg) { const el = document.getElementById('alert'); el.textContent = msg; el.classList.add('show'); }
+function hideAlert() { document.getElementById('alert').classList.remove('show'); }
+
+// =============================================
+// INIT
+// =============================================
+async function init() {
+  hideAlert();
+  try {
+    const { data: tipos } = await api('tipo_servico?select=id,slug,nome&order=ordem.asc');
+    tiposCatalog = tipos;
+    const selTipo = document.getElementById('filtroTipo');
+    selTipo.innerHTML = '<option value="">Tipo de serviço</option>';
+    tipos.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.slug;
+      o.textContent = t.nome || t.slug;
+      selTipo.appendChild(o);
+    });
+
+    await loadMore();
+
+    // Marca setinha de sort no header da coluna default (prazo_propostas asc)
+    document.querySelectorAll(`th[data-col="${sortCol}"]`).forEach(th => {
+      th.classList.add('sorted');
+      th.querySelector('.sort-arrow').textContent = sortDir === 1 ? '↑' : '↓';
+    });
+
+    document.getElementById('search').addEventListener('input', applyFilters);
+    document.getElementById('filtroEstado').addEventListener('change', applyFilters);
+    document.getElementById('filtroTipo').addEventListener('change', applyFilters);
+    document.getElementById('filtroModalidade').addEventListener('change', applyFilters);
+    document.getElementById('filtroStatus').addEventListener('change', applyFilters);
+    document.getElementById('filtroPrazo').addEventListener('change', applyFilters);
+    document.getElementById('mostrarFinalizadas').addEventListener('change', applyFilters);
+  } catch (e) {
+    console.error(e);
+    showAlert('Erro ao conectar: ' + e.message);
+  }
+}
+
+async function reload() {
+  rows = []; orgaos = {}; offset = 0; totalCount = null;
+  statusMap = {};
+  expandedRows.clear(); hideAlert();
+  await loadMore();
+}
+
+// =============================================
+// LOAD MORE
+// =============================================
+async function loadMore() {
+  const btn = document.getElementById('btnLoadMore');
+  btn.disabled = true; btn.textContent = 'Carregando…';
+  try {
+    const from = offset;
+    const to = offset + PAGE_SIZE - 1;
+
+    // Lê pela RPC listar_radar() (filtro/segurança no servidor; não expõe numero_conlicitacao).
+    // A RPC já ordena por score e devolve cada linha achatada com _score, _breakdown e licitacao_tipo_servico.
+    const path = `rpc/listar_radar?limit=${PAGE_SIZE}&offset=${from}`;
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'count=exact'
+      },
+      body: '{}'
+    });
+    if (res.status === 401) {
+      const ok = await tryRefreshToken();
+      if (!ok) { doLogout(); return; }
+      return loadMore();
+    }
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    const cr = res.headers.get('content-range');
+    if (cr) {
+      const m = cr.match(/\/(\d+)$/);
+      if (m) totalCount = parseInt(m[1], 10);
+    }
+
+    // A RPC já devolve cada linha achatada (campos da licitação + _score, _breakdown,
+    // licitacao_tipo_servico), sem numero_conlicitacao nem codigo_externo.
+    const flat = data;
+
+    const orgaoIds = [...new Set(flat.map(r => r.orgao_id).filter(Boolean).filter(id => !orgaos[id]))];
+    if (orgaoIds.length > 0) {
+      const { data: ods } = await api(`orgaos?id=in.(${orgaoIds.join(',')})&select=id,nome`);
+      ods.forEach(o => { orgaos[o.id] = o; });
+    }
+
+    // Carrega status do usuário pras licitações desse batch
+    // Em batches de 100 IDs pra evitar URL muito longa
+    const licIds = flat.map(r => r.id).filter(Boolean);
+    if (licIds.length > 0) {
+      try {
+        const BATCH = 100;
+        for (let i = 0; i < licIds.length; i += BATCH) {
+          const chunk = licIds.slice(i, i + BATCH);
+          const { data: stats } = await api(`licitacao_status_usuario?licitacao_id=in.(${chunk.join(',')})&select=licitacao_id,status`);
+          stats.forEach(s => { statusMap[s.licitacao_id] = s.status; });
+        }
+      } catch (e) {
+        console.warn('Falha ao carregar status:', e.message);
+      }
+    }
+
+    rows = rows.concat(flat);
+    offset += flat.length;
+
+    updateStats();
+    populateFilters();
+    applyFilters();
+    updateLoadMoreUI();
+
+  } catch (e) {
+    console.error(e);
+    showAlert('Erro ao carregar licitações: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = `Carregar mais ${PAGE_SIZE}`;
+  }
+}
+
+function updateLoadMoreUI() {
+  const btn = document.getElementById('btnLoadMore');
+  const status = document.getElementById('loadStatus');
+  if (totalCount !== null && rows.length >= totalCount) {
+    btn.style.display = 'none';
+    status.textContent = `Todas as ${totalCount} licitações carregadas.`;
+  } else if (totalCount !== null) {
+    btn.style.display = '';
+    status.textContent = `${rows.length} de ${totalCount} carregadas`;
+  }
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = rows.length;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const lim = new Date(hoje); lim.setDate(lim.getDate() + 7);
+  document.getElementById('statProximas').textContent = rows.filter(r => {
+    if (!r.data_abertura) return false;
+    const d = new Date(r.data_abertura + 'T00:00:00');
+    return d >= hoje && d <= lim;
+  }).length;
+}
+
+function populateFilters() {
+  const selE = document.getElementById('filtroEstado');
+  const ufs = [...new Set(rows.map(r => r.uf).filter(Boolean))].sort();
+  const curE = selE.value;
+  selE.innerHTML = '<option value="">Todos UF</option>' + ufs.map(u => `<option value="${u}">${u}</option>`).join('');
+  selE.value = curE;
+
+  // Modalidades efetivas presentes nos dados
+  const selM = document.getElementById('filtroModalidade');
+  const mods = [...new Set(rows.map(r => detectarModalidade(r).label))].sort();
+  const curM = selM.value;
+  selM.innerHTML = '<option value="">Tipo de contratação</option>' + mods.map(m => `<option value="${m}">${m}</option>`).join('');
+  selM.value = curM;
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const uf = document.getElementById('filtroEstado').value;
+  const tipo = document.getElementById('filtroTipo').value;
+  const mod = document.getElementById('filtroModalidade').value;
+  const statusFiltro = document.getElementById('filtroStatus').value;
+  const prazoFiltro = document.getElementById('filtroPrazo').value;
+  const mostrarFinalizadas = document.getElementById('mostrarFinalizadas').checked;
+
+  filtered = rows.filter(r => {
+    const stAtual = statusMap[r.id] || STATUS_DEFAULT;
+    const ps = prazoStatus(r);
+
+    // === Filtro de prazo ===
+    // Atalho "Próximas 7 dias" via clique no stat card
+    if (proximasOnly && ps.status !== 'urgente') return false;
+
+    if (prazoFiltro === 'urgente'    && ps.status !== 'urgente') return false;
+    if (prazoFiltro === 'proximo'    && !['urgente', 'proximo'].includes(ps.status)) return false;
+    if (prazoFiltro === 'ate30'      && !(ps.dias != null && ps.dias >= 0 && ps.dias <= 30)) return false;
+    if (prazoFiltro === 'encerrado'  && ps.status !== 'encerrado') return false;
+
+    // Esconde encerradas por default, a menos que:
+    // - filtro de prazo seja 'encerrado' ou 'incluir_encerrados'
+    // - estamos no atalho de "Próximas 7 dias" (já excluído acima)
+    if (ps.status === 'encerrado' && prazoFiltro !== 'encerrado' && prazoFiltro !== 'incluir_encerrados') return false;
+
+    // === Filtro de status manual ===
+    // Esconder finalizadas a menos que o usuário peça (ou filtre explicitamente por uma delas)
+    if (!mostrarFinalizadas && !statusFiltro && STATUS_FINALIZADOS.includes(stAtual)) return false;
+    if (statusFiltro && stAtual !== statusFiltro) return false;
+
+    // === Outros filtros ===
+    if (mod && detectarModalidade(r).label !== mod) return false;
+    if (uf && r.uf !== uf) return false;
+    if (tipo) {
+      const slugs = (r.licitacao_tipo_servico || []).map(t => t.tipo_servico?.slug);
+      if (!slugs.includes(tipo)) return false;
+    }
+    if (q) {
+      const org = getOrgao(r);
+      const hay = [r.objeto, r.itens, r.numero_edital, org.nome, r.cidade].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  sortData();
+  render();
+}
+
+function resetFilters() {
+  document.getElementById('search').value = '';
+  document.getElementById('filtroEstado').value = '';
+  document.getElementById('filtroTipo').value = '';
+  document.getElementById('filtroModalidade').value = '';
+  document.getElementById('filtroStatus').value = '';
+  document.getElementById('filtroPrazo').value = '';
+  document.getElementById('mostrarFinalizadas').checked = false;
+  proximasOnly = false;
+  document.getElementById('statProximasBox').classList.remove('active');
+  applyFilters();
+}
+
+function toggleProximas() {
+  proximasOnly = !proximasOnly;
+  document.getElementById('statProximasBox').classList.toggle('active', proximasOnly);
+  applyFilters();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  document.querySelectorAll(`th[data-col="${col}"]`).forEach(th => {
+    th.classList.add('sorted');
+    th.querySelector('.sort-arrow').textContent = sortDir === 1 ? '↑' : '↓';
+  });
+  sortData(); render();
+}
+
+function sortData() {
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortCol === 'score') {
+      va = a._score == null ? -1 : a._score;
+      vb = b._score == null ? -1 : b._score;
+      return (va - vb) * sortDir;
+    }
+    if (sortCol === '_status') {
+      // Ordem lógica do pipeline (não alfabética)
+      const ord = { captada: 1, triada: 2, em_analise: 3, proposta_enviada: 4, aguardando_resultado: 5, ganho: 6, perdido: 7, arquivada: 8 };
+      va = ord[statusMap[a.id] || STATUS_DEFAULT] || 99;
+      vb = ord[statusMap[b.id] || STATUS_DEFAULT] || 99;
+      return (va - vb) * sortDir;
+    }
+    if (sortCol === 'prazo_propostas') {
+      // Vazios sempre no fim, independente da direção
+      const va_raw = a.prazo_propostas, vb_raw = b.prazo_propostas;
+      if (!va_raw && !vb_raw) return 0;
+      if (!va_raw) return 1;
+      if (!vb_raw) return -1;
+      return va_raw.localeCompare(vb_raw) * sortDir;
+    }
+    if (sortCol === 'modalidade_calc') { va = detectarModalidade(a).label; vb = detectarModalidade(b).label; }
+    else if (sortCol === 'orgao') { va = getOrgao(a).nome || ''; vb = getOrgao(b).nome || ''; }
+    else if (sortCol === 'cidade') { va = getOrgao(a).cidade || ''; vb = getOrgao(b).cidade || ''; }
+    else if (sortCol === 'uf') { va = getOrgao(a).uf || ''; vb = getOrgao(b).uf || ''; }
+    else if (sortCol === 'valor_estimado') {
+      va = parseFloat(a.valor_estimado) || 0; vb = parseFloat(b.valor_estimado) || 0;
+      return (va - vb) * sortDir;
+    } else { va = a[sortCol] || ''; vb = b[sortCol] || ''; }
+    return String(va).localeCompare(String(vb), 'pt-BR') * sortDir;
+  });
+}
+
+// =============================================
+// RENDER
+// =============================================
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getOrgao(r) {
+  // Nome vem do órgão (FK); cidade/UF vêm direto da licitação
+  const org = orgaos[r.orgao_id] || {};
+  return { nome: org.nome || '—', cidade: r.cidade || '—', uf: r.uf || '—' };
+}
+function fmtValor(v) {
+  if (v == null || v === '' || v === 0) return '<span class="no-valor">—</span>';
+  const n = parseFloat(v);
+  if (isNaN(n)) return '<span class="no-valor">—</span>';
+  return `<span class="valor-fmt">R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
+}
+
+// Calcula status do prazo de propostas
+function prazoStatus(r) {
+  const raw = r.prazo_propostas;
+  if (!raw) return { status: 'sem_prazo', dias: null };
+  const d = new Date(raw + 'T23:59:59');
+  if (isNaN(d.getTime())) return { status: 'sem_prazo', dias: null };
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const ms = d.getTime() - hoje.getTime();
+  const dias = Math.floor(ms / (1000 * 60 * 60 * 24));
+  if (dias < 0)       return { status: 'encerrado', dias };
+  if (dias <= 7)      return { status: 'urgente',   dias };
+  if (dias <= 15)     return { status: 'proximo',   dias };
+  return { status: 'normal', dias };
+}
+
+function prazoCell(r) {
+  const raw = r.prazo_propostas;
+  const ps = prazoStatus(r);
+  if (ps.status === 'sem_prazo') return '<span class="prazo-cell prazo-sem">—</span>';
+  const cls = `prazo-${ps.status}`;
+  let label = '';
+  if (ps.status === 'encerrado')      label = `encerrou há ${Math.abs(ps.dias)}d`;
+  else if (ps.dias === 0)             label = 'hoje';
+  else if (ps.dias === 1)             label = 'amanhã';
+  else                                label = `em ${ps.dias}d`;
+  return `<span class="prazo-cell ${cls}" title="${label}">${esc(raw)}<span class="dias">${label}</span></span>`;
+}
+function badgeSituacao(s) {
+  const cls = ['NOVA','URGENTE','ATUALIZADA','ANULADA'].includes(s) ? `badge-sit-${s}` : 'badge-sit-default';
+  return `<span class="badge ${cls}">${esc(s || '—')}</span>`;
+}
+function badgesTipos(r) {
+  const tipos = (r.licitacao_tipo_servico || []).slice().sort((a, b) => (b.confianca || 0) - (a.confianca || 0));
+  if (tipos.length === 0) return '<span class="no-valor">—</span>';
+  return tipos.map(t => {
+    const nome = t.tipo_servico?.nome || t.tipo_servico?.slug || '?';
+    const conf = t.confianca != null ? `<span class="conf">${t.confianca}</span>` : '';
+    return `<span class="badge-tipo" title="${esc(t.observacao || '')}">${esc(nome)}${conf}</span>`;
+  }).join('');
+}
+
+function scoreBadge(s) {
+  if (s == null) return '<span class="no-valor">—</span>';
+  let cls = 'score-baixo';
+  if (s >= 80) cls = 'score-alto';
+  else if (s >= 60) cls = 'score-medio';
+  else if (s >= 40) cls = 'score-cinza';
+  return `<span class="score-badge ${cls}">${s}</span>`;
+}
+
+// Dropdown inline de status
+function statusDropdown(licitacaoId) {
+  const stAtual = statusMap[licitacaoId] || STATUS_DEFAULT;
+  const opts = Object.entries(STATUS_LABELS).map(([k, label]) =>
+    `<option value="${k}" ${k === stAtual ? 'selected' : ''}>${label}</option>`
+  ).join('');
+  return `<select class="status-select st-${stAtual}" data-lic-id="${licitacaoId}"
+            onclick="event.stopPropagation()"
+            onchange="updateStatus(event, '${licitacaoId}')">${opts}</select>`;
+}
+
+// Detecta modalidade a partir do objeto + numero_edital (regex em PT)
+const MOD_RULES = [
+  { key: 'credenciamento', label: 'Credenciamento', re: /credenciamento|credencia[cç][aã]o/i },
+  { key: 'chamamento',     label: 'Chamamento',     re: /chamamento\s*p[uú]blico|chamada\s*p[uú]blica/i },
+  { key: 'pregao',         label: 'Pregão',         re: /preg[aã]o|^pe\/|\bpe[\s_\-\/]/i },
+  { key: 'dispensa',       label: 'Dispensa',       re: /dispensa|^dl\/|\bdl[\s_\-\/]/i },
+  { key: 'tomada',         label: 'Tomada Preços',  re: /tomada\s*de?\s*pre[cç]o/i },
+  { key: 'concorrencia',   label: 'Concorrência',   re: /concorr[eê]ncia/i },
+  { key: 'licitacao',      label: 'Licitação',      re: /licita[cç][aã]o/i },
+];
+function detectarModalidade(r) {
+  const txt = `${r.numero_edital || ''} ${r.objeto || ''} ${r.observacao || ''}`;
+  for (const rule of MOD_RULES) {
+    if (rule.re.test(txt)) return { key: rule.key, label: rule.label };
+  }
+  return { key: 'outros', label: 'Outro' };
+}
+function modBadge(r) {
+  const m = detectarModalidade(r);
+  return `<span class="mod-badge mod-${m.key}">${m.label}</span>`;
+}
+
+function render() {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('countShown').textContent = filtered.length;
+  document.getElementById('countTotal').textContent = totalCount != null ? totalCount : rows.length;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const frags = [];
+  filtered.forEach(r => {
+    const id = r.id;
+    const org = getOrgao(r);
+    const isOpen = expandedRows.has(id);
+    const abertura = r.data_abertura || '—';
+    const ps = prazoStatus(r);
+    const rowCls = (isOpen ? 'expanded' : '') + (ps.status === 'encerrado' ? ' row-encerrada' : '');
+
+    frags.push(`
+      <tr onclick="toggleRow('${id}')" class="${rowCls.trim()}">
+        <td>${modBadge(r)}</td>
+        <td title="${esc(org.nome)}">${esc(org.nome)}</td>
+        <td>${esc(org.cidade)}</td>
+        <td style="font-weight:600;color:var(--muted)">${esc(org.uf)}</td>
+        <td title="${esc(r.numero_edital)}" style="color:var(--muted)">${esc(r.numero_edital || '—')}</td>
+        <td>${fmtValor(r.valor_estimado)}</td>
+        <td style="min-width:180px">${badgesTipos(r)}</td>
+        <td>${esc(abertura)}</td>
+        <td>${prazoCell(r)}</td>
+        <td class="status-cell">${statusDropdown(id)}</td>
+        <td><button class="expand-btn" onclick="ev(event,'${id}')">${isOpen ? '▲' : '▼'}</button></td>
+      </tr>
+      <tr class="detail-row ${isOpen ? 'open' : ''}">
+        <td colspan="11">${isOpen ? buildDetail(r) : ''}</td>
+      </tr>
+    `);
+  });
+  tbody.innerHTML = frags.join('');
+}
+
+function buildDetail(r) {
+  const org = getOrgao(r);
+  const mod = detectarModalidade(r);
+  const fields = [
+    { label: 'Objeto', val: r.objeto, full: true },
+    { label: 'Itens', val: r.itens, full: true },
+    { label: 'Órgão', val: org.nome },
+    { label: 'Cidade/UF', val: `${r.cidade || '—'}/${r.uf || '—'}` },
+    { label: 'Tipo de processo', val: mod.label },
+    { label: 'Modalidade (bruta)', val: r.modalidade },
+    { label: 'Nº Edital', val: r.numero_edital },
+    { label: 'Nº Processo', val: r.numero_processo },
+    { label: 'Valor Estimado', val: r.valor_estimado ? 'R$ ' + parseFloat(r.valor_estimado).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—' },
+    { label: 'Abertura', val: r.data_abertura ? (r.data_abertura + (r.hora_abertura ? ' ' + r.hora_abertura : '')) : '—' },
+    { label: 'Prazo propostas', val: r.prazo_propostas },
+    { label: 'Atualizada na fonte', val: r.atualizada_em_fonte ? new Date(r.atualizada_em_fonte).toLocaleDateString('pt-BR') : '—' },
+    { label: 'Local realização', val: r.local_realizacao },
+    { label: 'Cadastro prévio obrigatório', val: r.cadastro_previo_obrigatorio == null ? '—' : (r.cadastro_previo_obrigatorio ? 'Sim' : 'Não') },
+    { label: 'Link edital', val: r.link_edital, full: true },
+    { label: 'Link anexos', val: r.link_anexos, full: true },
+    { label: 'Observação', val: r.observacao, full: true },
+  ];
+  const html = fields.map(f =>
+    `<div class="detail-field ${f.full ? 'full' : ''}"><label>${esc(f.label)}</label><p>${esc(f.val || '—')}</p></div>`
+  ).join('');
+  return `<div class="detail-grid">${html}</div>`;
+}
+
+function toggleRow(id) {
+  if (expandedRows.has(id)) expandedRows.delete(id);
+  else expandedRows.add(id);
+  render();
+}
+function ev(e, id) { e.stopPropagation(); toggleRow(id); }
+
+// =============================================
+// UPDATE STATUS — UPSERT em licitacao_status_usuario
+// =============================================
+async function updateStatus(event, licitacaoId) {
+  const select = event.target;
+  const novoStatus = select.value;
+  const statusAnterior = statusMap[licitacaoId] || STATUS_DEFAULT;
+
+  if (novoStatus === statusAnterior) return;
+  if (!userId) { showAlert('Sessão sem userId. Faça login novamente.'); return; }
+
+  // Workspace fixo da Cherpinski (FK obrigatória)
+  const WORKSPACE_ID = '3367c159-dc2d-438e-ac01-959b257a2acb';
+
+  select.classList.add('saving');
+
+  const payload = {
+    licitacao_id: licitacaoId,
+    usuario_id: userId,
+    workspace_id: WORKSPACE_ID,
+    status: novoStatus
+  };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/licitacao_status_usuario?on_conflict=licitacao_id,usuario_id`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.status === 401) {
+      const ok = await tryRefreshToken();
+      if (!ok) { doLogout(); return; }
+      select.classList.remove('saving');
+      // Tenta de novo
+      return updateStatus(event, licitacaoId);
+    }
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`${res.status}: ${txt}`);
+    }
+
+    // Sucesso: atualiza estado local e classe visual sem re-render completo
+    statusMap[licitacaoId] = novoStatus;
+    select.className = `status-select st-${novoStatus}`;
+
+    // Se o filtro atual deveria esconder essa linha agora, re-render pra remover
+    const mostrarFinalizadas = document.getElementById('mostrarFinalizadas').checked;
+    const filtroStatus = document.getElementById('filtroStatus').value;
+    const sumir = (!mostrarFinalizadas && !filtroStatus && STATUS_FINALIZADOS.includes(novoStatus))
+               || (filtroStatus && filtroStatus !== novoStatus);
+    if (sumir) applyFilters();
+
+  } catch (e) {
+    console.error('Erro ao salvar status:', e);
+    // Reverte UI pro estado anterior
+    select.value = statusAnterior;
+    select.className = `status-select st-${statusAnterior}`;
+    showAlert('Erro ao salvar status: ' + e.message);
+    setTimeout(hideAlert, 4000);
+  } finally {
+    select.classList.remove('saving');
+  }
+}
+
+// =============================================
+// BOOT — tenta sessão salva
+// =============================================
+(async function boot() {
+  const saved = loadSession();
+  if (saved && saved.refreshToken) {
+    refreshToken = saved.refreshToken;
+    accessToken = saved.accessToken;
+    userEmail = saved.userEmail;
+    userId = saved.userId || null;
+    const ok = await tryRefreshToken();
+    if (ok) { enterApp(); return; }
+    clearSession();
+  }
+  // sem sessão → fica na tela de login
+})();
+</script>
+
+</body>
+</html>
