@@ -245,6 +245,7 @@
     <option value="ate30">Próximos 30 dias</option>
     <option value="encerrado">Apenas encerrados</option>
     <option value="incluir_encerrados">Incluir encerrados</option>
+    <option value="sem_data">Sem data</option>
   </select>
   <select id="filtroStatus">
     <option value="">Todos status</option>
@@ -646,6 +647,7 @@ function applyFilters() {
     if (prazoFiltro === 'proximo'    && !['urgente', 'proximo'].includes(ps.status)) return false;
     if (prazoFiltro === 'ate30'      && !(ps.dias != null && ps.dias >= 0 && ps.dias <= 30)) return false;
     if (prazoFiltro === 'encerrado'  && ps.status !== 'encerrado') return false;
+    if (prazoFiltro === 'sem_data'   && ps.status !== 'sem_prazo') return false;
 
     // Esconde encerradas por default, a menos que:
     // - filtro de prazo seja 'encerrado' ou 'incluir_encerrados'
