@@ -54,6 +54,9 @@
   .prazo-encerrado { color: var(--muted); text-decoration: line-through; }
   .prazo-sem       { color: #d6d3d1; }
   .prazo-cell .dias { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+  .data-tag { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 4px; border-radius: 3px; margin-right: 6px; vertical-align: middle; font-weight: 600; }
+  .data-tag-abertura { background: #dbeafe; color: #1e3a8a; }
+  .data-tag-prazo    { background: #fef3c7; color: #78350f; }
 
   /* Linha com prazo encerrado — apagada */
   tr.row-encerrada td { opacity: 0.55; }
@@ -272,8 +275,7 @@
         <th>Edital</th>
         <th data-col="valor_estimado" onclick="sortBy('valor_estimado')">Valor <span class="sort-arrow"></span></th>
         <th>Tipos serviço</th>
-        <th data-col="data_abertura" onclick="sortBy('data_abertura')">Abertura <span class="sort-arrow"></span></th>
-        <th data-col="prazo_propostas" onclick="sortBy('prazo_propostas')">Prazo <span class="sort-arrow"></span></th>
+        <th data-col="data_relevante" onclick="sortBy('data_relevante')">Data <span class="sort-arrow"></span></th>
         <th data-col="_status" onclick="sortBy('_status')">Status <span class="sort-arrow"></span></th>
         <th></th>
       </tr>
@@ -312,7 +314,7 @@ let tiposCatalog = [];
 let orgaos = {};
 let offset = 0;
 let totalCount = null;
-let sortCol = 'prazo_propostas';
+let sortCol = 'data_relevante';
 let sortDir = 1;
 let expandedRows = new Set();
 let filtered = [];
@@ -601,8 +603,9 @@ function updateStats() {
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const lim = new Date(hoje); lim.setDate(lim.getDate() + 7);
   document.getElementById('statProximas').textContent = rows.filter(r => {
-    if (!r.data_abertura) return false;
-    const d = new Date(r.data_abertura + 'T00:00:00');
+    const dr = dataRelevante(r).date;
+    if (!dr) return false;
+    const d = new Date(dr + 'T00:00:00');
     return d >= hoje && d <= lim;
   }).length;
 }
@@ -717,9 +720,9 @@ function sortData() {
       vb = ord[statusMap[b.id] || STATUS_DEFAULT] || 99;
       return (va - vb) * sortDir;
     }
-    if (sortCol === 'prazo_propostas') {
+    if (sortCol === 'data_relevante') {
       // Vazios sempre no fim, independente da direção
-      const va_raw = a.prazo_propostas, vb_raw = b.prazo_propostas;
+      const va_raw = dataRelevante(a).date, vb_raw = dataRelevante(b).date;
       if (!va_raw && !vb_raw) return 0;
       if (!va_raw) return 1;
       if (!vb_raw) return -1;
@@ -753,9 +756,17 @@ function fmtValor(v) {
   return `<span class="valor-fmt">R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
 }
 
-// Calcula status do prazo de propostas
+// Data relevante: abertura OU prazo de propostas (nunca coexistem nos dados).
+// Retorna a data ISO que existir, o tipo ('abertura'|'prazo') e a hora (só p/ abertura).
+function dataRelevante(r) {
+  if (r.data_abertura)   return { date: r.data_abertura,   kind: 'abertura', hora: r.hora_abertura || null };
+  if (r.prazo_propostas) return { date: r.prazo_propostas, kind: 'prazo',    hora: null };
+  return { date: null, kind: null, hora: null };
+}
+
+// Calcula status (cor/dias) sobre a data relevante da licitação
 function prazoStatus(r) {
-  const raw = r.prazo_propostas;
+  const raw = dataRelevante(r).date;
   if (!raw) return { status: 'sem_prazo', dias: null };
   const d = new Date(raw + 'T23:59:59');
   if (isNaN(d.getTime())) return { status: 'sem_prazo', dias: null };
@@ -768,17 +779,22 @@ function prazoStatus(r) {
   return { status: 'normal', dias };
 }
 
-function prazoCell(r) {
-  const raw = r.prazo_propostas;
+// Célula única de Data: mostra abertura OU prazo, com etiqueta do tipo e dias restantes
+function dataCell(r) {
+  const dr = dataRelevante(r);
   const ps = prazoStatus(r);
-  if (ps.status === 'sem_prazo') return '<span class="prazo-cell prazo-sem">—</span>';
+  if (!dr.date) return '<span class="prazo-cell prazo-sem">—</span>';
   const cls = `prazo-${ps.status}`;
   let label = '';
   if (ps.status === 'encerrado')      label = `encerrou há ${Math.abs(ps.dias)}d`;
   else if (ps.dias === 0)             label = 'hoje';
   else if (ps.dias === 1)             label = 'amanhã';
   else                                label = `em ${ps.dias}d`;
-  return `<span class="prazo-cell ${cls}" title="${label}">${esc(raw)}<span class="dias">${label}</span></span>`;
+  const tag = dr.kind === 'abertura' ? 'abertura' : 'prazo';
+  const horaTxt = dr.hora ? ' ' + esc(dr.hora) : '';
+  return `<span class="prazo-cell ${cls}" title="${tag} · ${label}">`
+       + `<span class="data-tag data-tag-${dr.kind}">${tag}</span>`
+       + `${esc(dr.date)}${horaTxt}<span class="dias">${label}</span></span>`;
 }
 function badgeSituacao(s) {
   const cls = ['NOVA','URGENTE','ATUALIZADA','ANULADA'].includes(s) ? `badge-sit-${s}` : 'badge-sit-default';
@@ -854,7 +870,6 @@ function render() {
     const id = r.id;
     const org = getOrgao(r);
     const isOpen = expandedRows.has(id);
-    const abertura = r.data_abertura || '—';
     const ps = prazoStatus(r);
     const rowCls = (isOpen ? 'expanded' : '') + (ps.status === 'encerrado' ? ' row-encerrada' : '');
 
@@ -867,13 +882,12 @@ function render() {
         <td title="${esc(r.numero_edital)}" style="color:var(--muted)">${esc(r.numero_edital || '—')}</td>
         <td>${fmtValor(r.valor_estimado)}</td>
         <td style="min-width:180px">${badgesTipos(r)}</td>
-        <td>${esc(abertura)}</td>
-        <td>${prazoCell(r)}</td>
+        <td>${dataCell(r)}</td>
         <td class="status-cell">${statusDropdown(id)}</td>
         <td><button class="expand-btn" onclick="ev(event,'${id}')">${isOpen ? '▲' : '▼'}</button></td>
       </tr>
       <tr class="detail-row ${isOpen ? 'open' : ''}">
-        <td colspan="11">${isOpen ? buildDetail(r) : ''}</td>
+        <td colspan="10">${isOpen ? buildDetail(r) : ''}</td>
       </tr>
     `);
   });
