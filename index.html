@@ -26,6 +26,11 @@
   .lock-box button { width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
   .lock-box button:disabled { opacity: 0.5; cursor: not-allowed; }
   .lock-box .err { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 16px; }
+  .lock-box .divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 4px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .lock-box .divider::before, .lock-box .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .lock-box .btn-comprar { display: block; width: 100%; box-sizing: border-box; padding: 10px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; text-align: center; text-decoration: none; }
+  .lock-box .btn-comprar:hover { background: var(--accent); color: white; }
+  .lock-box .comprar-hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
 
   /* HEADER */
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
@@ -208,6 +213,10 @@
     <input type="password" id="pwdInput" autocomplete="current-password">
     <button id="btnLogin" onclick="doLogin()">Entrar</button>
     <div class="err" id="pwdErr"></div>
+
+    <div class="divider">ainda não é aluno?</div>
+    <a id="btnComprar" class="btn-comprar" href="#" target="_blank" rel="noopener">Quero assinar o Radar</a>
+    <p class="comprar-hint">Acesso liberado por e-mail após a compra.</p>
   </div>
 </div>
 
@@ -300,6 +309,11 @@ const SUPABASE_URL = 'https://dgfspbqeffhlildpzskh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZnNwYnFlZmZobGlsZHB6c2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTI3MTMsImV4cCI6MjA5NDc4ODcxM30.ZR1QgmahWCZ4KEqd1UUUNg2n1o5T-ar5VvHXGXiuLAc';
 const PAGE_SIZE = 1000;
 const STORAGE_KEY = 'radar_sb_session';
+
+// Link de checkout da Kiwify (botão "Quero assinar" na tela de login).
+// QUANDO CRIAR O PRODUTO NA KIWIFY: cole aqui o link de compra (ex.: https://pay.kiwify.com.br/XXXXXXX)
+// Enquanto estiver vazio (''), o botão mostra "Em breve" e não leva a lugar nenhum.
+const KIWIFY_CHECKOUT_URL = '';
 
 // =============================================
 // STATE
@@ -450,6 +464,22 @@ function enterApp() {
 
 document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pwdInput').focus(); });
+
+// Configura o botão de compra conforme o link da Kiwify esteja definido ou não
+(function setupComprar() {
+  const btn = document.getElementById('btnComprar');
+  if (!btn) return;
+  if (KIWIFY_CHECKOUT_URL) {
+    btn.href = KIWIFY_CHECKOUT_URL;
+  } else {
+    // Sem link ainda: vira aviso "Em breve", sem navegar
+    btn.textContent = 'Assinatura em breve';
+    btn.removeAttribute('href');
+    btn.style.opacity = '0.55';
+    btn.style.cursor = 'default';
+    btn.style.pointerEvents = 'none';
+  }
+})();
 
 // =============================================
 // API
