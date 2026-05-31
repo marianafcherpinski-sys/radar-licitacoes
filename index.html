@@ -945,8 +945,9 @@ async function updateStatus(event, licitacaoId) {
   if (novoStatus === statusAnterior) return;
   if (!userId) { showAlert('Sessão sem userId. Faça login novamente.'); return; }
 
-  // Workspace fixo da Cherpinski (FK obrigatória)
-  const WORKSPACE_ID = '3367c159-dc2d-438e-ac01-959b257a2acb';
+  // Workspace da Cherpinski (FK obrigatória, NOT NULL). Single-tenant na origem.
+  // ATENÇÃO: este é o id da tabela `workspaces`, NÃO o do usuário.
+  const WORKSPACE_ID = '705fc023-a034-408c-8005-0e4ebab1dbaa';
 
   select.classList.add('saving');
 
