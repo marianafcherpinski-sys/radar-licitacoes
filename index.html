@@ -309,6 +309,7 @@ let accessToken = null;
 let refreshToken = null;
 let userEmail = null;
 let userId = null;
+let userName = null;
 
 let rows = [];
 let tiposCatalog = [];
@@ -406,7 +407,7 @@ async function tryRefreshToken() {
 
 function doLogout() {
   clearSession();
-  accessToken = null; refreshToken = null; userEmail = null; userId = null;
+  accessToken = null; refreshToken = null; userEmail = null; userId = null; userName = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('lockScreen').style.display = 'flex';
   document.getElementById('emailInput').value = '';
@@ -414,11 +415,38 @@ function doLogout() {
   document.getElementById('pwdErr').textContent = '';
 }
 
+// Busca o nome do próprio usuário (RLS permite ler o próprio registro: user_read_self)
+async function fetchUserName() {
+  if (!userId) return;
+  try {
+    const { data } = await api(`usuarios?id=eq.${userId}&select=nome`);
+    if (data && data[0] && data[0].nome) {
+      userName = data[0].nome;
+      const saved = loadSession() || {};
+      saveSession({ ...saved, accessToken, refreshToken, userEmail, userId, userName });
+    }
+  } catch (e) {
+    console.warn('Não foi possível carregar o nome do usuário:', e.message);
+  }
+}
+
+function renderSaudacao() {
+  const el = document.getElementById('userEmail');
+  if (userName) {
+    const primeiro = userName.trim().split(/\s+/)[0];
+    el.textContent = `Olá, ${primeiro}`;
+  } else {
+    el.textContent = userEmail || '';
+  }
+}
+
 function enterApp() {
   document.getElementById('lockScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('userEmail').textContent = userEmail;
+  renderSaudacao();
   init();
+  // Carrega o nome em segundo plano e atualiza a saudação quando chegar
+  fetchUserName().then(renderSaudacao);
 }
 
 document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
@@ -1016,6 +1044,7 @@ async function updateStatus(event, licitacaoId) {
     accessToken = saved.accessToken;
     userEmail = saved.userEmail;
     userId = saved.userId || null;
+    userName = saved.userName || null;
     const ok = await tryRefreshToken();
     if (ok) { enterApp(); return; }
     clearSession();
