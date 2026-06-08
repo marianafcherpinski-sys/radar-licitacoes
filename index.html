@@ -185,6 +185,7 @@
   .status-select.st-ganho                { background: var(--accent-soft); color: var(--accent); }
   .status-select.st-perdido              { background: #fee2e2; color: var(--danger); }
   .status-select.st-arquivada            { background: #e7e5e4; color: var(--muted); }
+  .status-select.st-sem_interesse        { background: #e7e5e4; color: var(--muted); }
 
   /* checkbox "mostrar finalizadas" no bloco de filtros */
   .filters .toggle-finalizadas {
@@ -265,6 +266,7 @@
     <option value="ganho">Ganho</option>
     <option value="perdido">Perdido</option>
     <option value="arquivada">Arquivada</option>
+    <option value="sem_interesse">Sem interesse</option>
   </select>
   <label class="toggle-finalizadas">
     <input type="checkbox" id="mostrarFinalizadas"> Mostrar finalizadas
@@ -338,7 +340,7 @@ let proximasOnly = false; // toggle do stat card "Próximas 7 dias"
 
 // Default visual quando não há registro em licitacao_status_usuario
 const STATUS_DEFAULT = 'captada';
-const STATUS_FINALIZADOS = ['ganho', 'perdido', 'arquivada'];
+const STATUS_FINALIZADOS = ['ganho', 'perdido', 'arquivada', 'sem_interesse'];
 const STATUS_LABELS = {
   captada: 'Captada',
   triada: 'Triada',
@@ -347,7 +349,8 @@ const STATUS_LABELS = {
   aguardando_resultado: 'Aguardando resultado',
   ganho: 'Ganho',
   perdido: 'Perdido',
-  arquivada: 'Arquivada'
+  arquivada: 'Arquivada',
+  sem_interesse: 'Sem interesse'
 };
 
 // =============================================
@@ -774,7 +777,7 @@ function sortData() {
     }
     if (sortCol === '_status') {
       // Ordem lógica do pipeline (não alfabética)
-      const ord = { captada: 1, triada: 2, em_analise: 3, proposta_enviada: 4, aguardando_resultado: 5, ganho: 6, perdido: 7, arquivada: 8 };
+      const ord = { captada: 1, triada: 2, em_analise: 3, proposta_enviada: 4, aguardando_resultado: 5, ganho: 6, perdido: 7, arquivada: 8, sem_interesse: 9 };
       va = ord[statusMap[a.id] || STATUS_DEFAULT] || 99;
       vb = ord[statusMap[b.id] || STATUS_DEFAULT] || 99;
       return (va - vb) * sortDir;
