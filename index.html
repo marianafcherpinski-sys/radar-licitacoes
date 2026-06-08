@@ -803,6 +803,17 @@ function sortData() {
 // RENDER
 // =============================================
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Alguns campos (objeto/itens/observacao) chegam da fonte com HTML cru
+// (<div>, <table>, <p>) e entidades (&#8211;). Remove as tags e decodifica
+// as entidades. Usa textarea só para decodificar (não executa scripts).
+function limparHtml(s) {
+  if (s == null) return '';
+  let t = String(s).replace(/<[^>]*>/g, ' ');
+  const ta = document.createElement('textarea');
+  ta.innerHTML = t;
+  t = ta.value;
+  return t.replace(/\s+/g, ' ').trim();
+}
 function getOrgao(r) {
   // Nome vem do órgão (FK); cidade/UF vêm direto da licitação
   const org = orgaos[r.orgao_id] || {};
@@ -957,8 +968,8 @@ function buildDetail(r) {
   const org = getOrgao(r);
   const mod = detectarModalidade(r);
   const fields = [
-    { label: 'Objeto', val: r.objeto, full: true },
-    { label: 'Itens', val: r.itens, full: true },
+    { label: 'Objeto', val: limparHtml(r.objeto), full: true },
+    { label: 'Itens', val: limparHtml(r.itens), full: true },
     { label: 'Órgão', val: org.nome },
     { label: 'Cidade/UF', val: `${r.cidade || '—'}/${r.uf || '—'}` },
     { label: 'Tipo de processo', val: mod.label },
@@ -973,7 +984,7 @@ function buildDetail(r) {
     { label: 'Cadastro prévio obrigatório', val: r.cadastro_previo_obrigatorio == null ? '—' : (r.cadastro_previo_obrigatorio ? 'Sim' : 'Não') },
     { label: 'Link edital', val: r.link_edital, full: true, omitIfEmpty: true },
     { label: 'Link anexos', val: r.link_anexos, full: true, omitIfEmpty: true },
-    { label: 'Observação', val: r.observacao, full: true },
+    { label: 'Observação', val: limparHtml(r.observacao), full: true },
   ];
   // Campos de link só aparecem quando há valor (a RPC não devolve esses links para alunos).
   const html = fields
