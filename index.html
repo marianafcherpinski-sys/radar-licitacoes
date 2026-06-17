@@ -1081,6 +1081,16 @@ async function updateStatus(event, licitacaoId) {
 // BOOT — tenta sessão salva
 // =============================================
 (async function boot() {
+  // Link de recuperação de senha cai aqui (Site URL) com o token no # ou ?.
+  // Só redireciona quando for claramente recovery, pra não afetar o login normal.
+  const hash = window.location.hash || '';
+  const query = window.location.search || '';
+  const ehRecovery = hash.includes('type=recovery') || query.includes('type=recovery');
+  if (ehRecovery) {
+    window.location.replace('definir-senha.html' + query + hash);
+    return;
+  }
+
   const saved = loadSession();
   if (saved && saved.refreshToken) {
     refreshToken = saved.refreshToken;
