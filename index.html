@@ -1081,14 +1081,37 @@ async function updateStatus(event, licitacaoId) {
 // BOOT — tenta sessão salva
 // =============================================
 (async function boot() {
-  // Link de recuperação de senha cai aqui (Site URL) com o token no # ou ?.
-  // Só redireciona quando for claramente recovery, pra não afetar o login normal.
+  // Links de e-mail (magic link / recovery) caem aqui (Site URL) com o token no #.
   const hash = window.location.hash || '';
   const query = window.location.search || '';
-  const ehRecovery = hash.includes('type=recovery') || query.includes('type=recovery');
-  if (ehRecovery) {
+
+  // 1) Recuperação de senha → manda pra página de definir senha (leva o token junto).
+  if (hash.includes('type=recovery') || query.includes('type=recovery')) {
     window.location.replace('definir-senha.html' + query + hash);
     return;
+  }
+
+  // 2) Magic link → vem com access_token e refresh_token no hash. Loga direto.
+  if (hash.includes('access_token=')) {
+    const p = new URLSearchParams(hash.slice(1));
+    const at = p.get('access_token');
+    const rt = p.get('refresh_token');
+    if (at) {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${at}` }
+        });
+        if (res.ok) {
+          const u = await res.json();
+          accessToken = at; refreshToken = rt;
+          userEmail = u.email; userId = u.id;
+          saveSession({ accessToken, refreshToken, userEmail, userId });
+          history.replaceState(null, '', window.location.pathname); // limpa o token da URL
+          enterApp();
+          return;
+        }
+      } catch (e) { console.warn('Falha ao processar magic link:', e.message); }
+    }
   }
 
   const saved = loadSession();
