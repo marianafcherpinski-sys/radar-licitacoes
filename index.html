@@ -31,6 +31,12 @@
   .lock-box .btn-comprar { display: block; width: 100%; box-sizing: border-box; padding: 10px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; text-align: center; text-decoration: none; }
   .lock-box .btn-comprar:hover { background: var(--accent); color: white; }
   .lock-box .comprar-hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+  .lock-box .btn-whats { background: var(--accent); color: #fff; margin-top: 4px; }
+  .lock-box .btn-whats:hover { background: var(--accent); color: #fff; opacity: 0.92; }
+  .lock-box p.exp-ola { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+  .lock-box .exp-trocar { display: block; text-align: center; margin-top: 8px; font-size: 12px; color: var(--muted); text-decoration: none; }
+  .lock-box .exp-trocar:hover { color: var(--accent); }
+  #expiredScreen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 
   /* HEADER */
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
@@ -219,6 +225,19 @@
     <div class="divider">ainda não é aluno?</div>
     <a id="btnComprar" class="btn-comprar" href="#" target="_blank" rel="noopener">Quero assinar o Radar</a>
     <p class="comprar-hint">Depois da compra, você recebe o acesso por e-mail.</p>
+  </div>
+</div>
+
+<!-- ACESSO ENCERRADO -->
+<div id="expiredScreen" style="display:none">
+  <div class="lock-box">
+    <h2>Seu acesso ao Radar encerrou</h2>
+    <p class="exp-ola" id="expOla"></p>
+    <p class="sub" id="expMsg"></p>
+    <a id="expWhats" class="btn-comprar btn-whats" href="#" target="_blank" rel="noopener">Renovar pelo WhatsApp</a>
+    <p class="comprar-hint">Assim que o pagamento for confirmado, seu acesso volta na hora.</p>
+    <div class="divider">não é você?</div>
+    <a href="#" class="exp-trocar" onclick="doLogout(); return false;">Entrar com outra conta</a>
   </div>
 </div>
 
@@ -430,6 +449,7 @@ function doLogout() {
   clearSession();
   accessToken = null; refreshToken = null; userEmail = null; userId = null; userName = null;
   document.getElementById('app').style.display = 'none';
+  document.getElementById('expiredScreen').style.display = 'none';
   document.getElementById('lockScreen').style.display = 'flex';
   document.getElementById('emailInput').value = '';
   document.getElementById('pwdInput').value = '';
@@ -461,8 +481,59 @@ function renderSaudacao() {
   }
 }
 
-function enterApp() {
+// Link de renovação: abre o WhatsApp da Cherpinski com mensagem pronta.
+const WHATSAPP_RENOVACAO = '5542988635363';
+
+// Lê o próprio cadastro (RLS permite: user_read_self) e diz se o acesso está válido.
+// A trava real continua no servidor (listar_radar); isto é só pra mostrar a mensagem certa.
+async function checkAccess() {
+  try {
+    const { data } = await api(`usuarios?id=eq.${userId}&select=nome,status,data_inicio_acesso,data_fim_acesso`);
+    const u = data && data[0];
+    if (!u) return { ok: false, motivo: 'sem_cadastro', fim: null };
+    if (u.nome) {
+      userName = u.nome;
+      const saved = loadSession() || {};
+      saveSession({ ...saved, accessToken, refreshToken, userEmail, userId, userName });
+    }
+    const agora = new Date();
+    const inicio = u.data_inicio_acesso ? new Date(u.data_inicio_acesso) : null;
+    const fim = u.data_fim_acesso ? new Date(u.data_fim_acesso) : null;
+    const dentroJanela = (!inicio || agora >= inicio) && (!fim || agora <= fim);
+    const ok = u.status === 'ativo' && dentroJanela;
+    const motivo = ok ? null : (u.status !== 'ativo' ? 'revogado' : 'expirado');
+    return { ok, motivo, fim };
+  } catch (e) {
+    // Se não deu pra checar (rede/sessão), não trava: o servidor ainda protege os dados.
+    console.warn('checkAccess falhou:', e.message);
+    return { ok: true, motivo: null, fim: null, incerto: true };
+  }
+}
+
+function showExpired(acesso) {
+  document.getElementById('app').style.display = 'none';
   document.getElementById('lockScreen').style.display = 'none';
+  const primeiro = userName ? userName.trim().split(/\s+/)[0] : null;
+  document.getElementById('expOla').textContent = primeiro ? `Olá, ${primeiro}.` : '';
+  const msg = document.getElementById('expMsg');
+  if (acesso.motivo === 'sem_cadastro') {
+    msg.textContent = 'Sua conta ainda não tem um período de acesso liberado. Fale com a Cherpinski para ativar.';
+  } else if (acesso.fim) {
+    msg.textContent = `Seu período de acesso terminou em ${acesso.fim.toLocaleDateString('pt-BR')}. Para voltar a receber as licitações, é preciso renovar.`;
+  } else {
+    msg.textContent = 'Seu período de acesso terminou. Para voltar a receber as licitações, é preciso renovar.';
+  }
+  const texto = encodeURIComponent(`Olá! Quero renovar meu acesso ao Radar de Licitações. Meu e-mail de acesso é ${userEmail || ''}.`);
+  document.getElementById('expWhats').href = `https://wa.me/${WHATSAPP_RENOVACAO}?text=${texto}`;
+  document.getElementById('expiredScreen').style.display = 'flex';
+}
+
+async function enterApp() {
+  document.getElementById('lockScreen').style.display = 'none';
+  // Trava de acesso: se a janela expirou/foi revogada, mostra a mensagem em vez do radar vazio.
+  const acesso = await checkAccess();
+  if (!acesso.ok) { showExpired(acesso); return; }
+  document.getElementById('expiredScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderSaudacao();
   init();
