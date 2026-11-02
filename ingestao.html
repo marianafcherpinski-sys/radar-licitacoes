@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ingestão — Radar de Licitações</title>
+<style>
+  :root{
+    --bg:#FAF9F6; --surface:#FFFFFF; --border:#E6E3DC;
+    --text:#18170F; --muted:#5C5A52; --muted2:#9B9890;
+    --red:#C8222A; --green:#15803d; --green-soft:#dcfce7;
+    --amber:#b45309; --amber-soft:#fef3c7; --info:#1e40af; --info-soft:#dbeafe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:15px;line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:32px 16px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 24px}
+  .card{background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:20px;margin-bottom:16px}
+  label{display:block;font-size:12px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+  input[type=email],input[type=password]{width:100%;padding:10px 12px;
+    border:1px solid var(--border);border-radius:8px;font-size:15px;background:#fff}
+  button{background:var(--red);color:#fff;border:0;border-radius:8px;
+    padding:11px 16px;font-size:15px;font-weight:600;cursor:pointer;width:100%}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--muted);font-weight:500;
+    border:1px solid var(--border);width:auto;padding:7px 12px;font-size:13px}
+  .drop{border:2px dashed var(--border);border-radius:10px;padding:28px 16px;
+    text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+  .drop.hot{border-color:var(--red);background:#fff5f5}
+  .drop strong{color:var(--text)}
+  .hidden{display:none}
+  .err{color:var(--red);font-size:13px;margin-top:10px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .muted{color:var(--muted);font-size:13px}
+  .stat{display:flex;justify-content:space-between;padding:8px 0;
+    border-bottom:1px solid var(--border)}
+  .stat:last-child{border-bottom:0}
+  .stat b{font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px}
+  .pill.g{background:var(--green-soft);color:var(--green)}
+  .pill.a{background:var(--amber-soft);color:var(--amber)}
+  .pill.i{background:var(--info-soft);color:var(--info)}
+  details{margin-top:12px}summary{cursor:pointer;color:var(--muted);font-size:13px}
+  .small{font-size:12px;color:var(--muted2);margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ingestão de licitações</h1>
+  <p class="sub">Suba o arquivo Excel do ConLicitação. Só o seu acesso ingere.</p>
+
+  <!-- LOGIN -->
+  <div id="loginCard" class="card hidden">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" autocomplete="username" style="margin-bottom:14px">
+    <label for="pwd">Senha</label>
+    <input type="password" id="pwd" autocomplete="current-password" style="margin-bottom:16px">
+    <button id="loginBtn">Entrar</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="appCard" class="card hidden">
+    <div class="row" style="margin-bottom:16px">
+      <span class="muted">Conectada como <b id="who"></b></span>
+      <button class="ghost" id="logoutBtn">Sair</button>
+    </div>
+
+    <div id="drop" class="drop">
+      <strong>Arraste o Excel aqui</strong><br>
+      <span>ou clique para escolher o arquivo (.xlsx)</span>
+      <input type="file" id="file" accept=".xlsx,.xls" class="hidden">
+    </div>
+    <div id="fileInfo" class="muted" style="margin-top:12px"></div>
+
+    <button id="ingBtn" style="margin-top:16px" disabled>Ingerir licitações</button>
+    <div id="appErr" class="err"></div>
+    <div id="result" class="hidden" style="margin-top:20px"></div>
+
+    <p class="small">A página lê o arquivo no seu navegador e envia só as licitações.
+      Nenhum arquivo fica guardado. As que não têm a ver com avaliação ou laudo são
+      filtradas automaticamente pelo próprio Radar.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/package/dist/xlsx.full.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://dgfspbqeffhlildpzskh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZnNwYnFlZmZobGlsZHB6c2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTI3MTMsImV4cCI6MjA5NDc4ODcxM30.ZR1QgmahWCZ4KEqd1UUUNg2n1o5T-ar5VvHXGXiuLAc';
+const STORAGE_KEY = 'radar_sb_session';
+
+let accessToken = null, userEmail = null, lote = null;
+
+// ---------- sessão (compartilhada com o Radar: mesmo domínio) ----------
+function loadSession(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    return s && s.access_token ? s : null;
+  }catch{ return null; }
+}
+function saveSession(s){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch{} }
+function clearSession(){ try{ localStorage.removeItem(STORAGE_KEY); }catch{} }
+
+async function currentUser(token){
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers:{ apikey: SUPABASE_ANON_KEY, Authorization:`Bearer ${token}` }
+  });
+  if(!res.ok) return null;
+  return res.json();
+}
+
+async function boot(){
+  const s = loadSession();
+  if(s){
+    const u = await currentUser(s.access_token);
+    if(u && u.email){ accessToken = s.access_token; userEmail = u.email; return showApp(); }
+    clearSession();
+  }
+  showLogin();
+}
+
+function showLogin(){ el('loginCard').classList.remove('hidden'); el('appCard').classList.add('hidden'); }
+function showApp(){
+  el('loginCard').classList.add('hidden');
+  el('appCard').classList.remove('hidden');
+  el('who').textContent = userEmail || '';
+}
+
+// ---------- login ----------
+el('loginBtn').onclick = async ()=>{
+  const email = el('email').value.trim(), pwd = el('pwd').value;
+  el('loginErr').textContent = '';
+  if(!email || !pwd){ el('loginErr').textContent = 'Informe e-mail e senha.'; return; }
+  el('loginBtn').disabled = true; el('loginBtn').textContent = 'Entrando...';
+  try{
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password: pwd })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.access_token){ throw new Error(data.error_description || data.msg || 'Login inválido'); }
+    accessToken = data.access_token; userEmail = email;
+    saveSession(data);
+    showApp();
+  }catch(e){ el('loginErr').textContent = e.message || 'Falha no login'; }
+  finally{ el('loginBtn').disabled = false; el('loginBtn').textContent = 'Entrar'; }
+};
+el('logoutBtn').onclick = ()=>{ clearSession(); accessToken=null; userEmail=null; location.reload(); };
+
+// ---------- upload do arquivo ----------
+const drop = el('drop'), fileInput = el('file');
+drop.onclick = ()=> fileInput.click();
+;['dragover','dragenter'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault();drop.classList.add('hot');}));
+;['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault();drop.classList.remove('hot');}));
+drop.addEventListener('drop', e=>{ if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+fileInput.onchange = ()=>{ if(fileInput.files[0]) handleFile(fileInput.files[0]); };
+
+// normaliza cabeçalho: minúsculo, sem acento, sem espaço extra
+function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
+const MAP = {
+  'numero conlicitacao':'numero_conlicitacao', 'codigo':'codigo_externo',
+  'cidade':'cidade', 'estado':'uf', 'endereco':'endereco', 'cep':'cep',
+  'edital':'numero_edital', 'processo':'numero_processo',
+  'objeto':'objeto', 'itens':'itens', 'observacao':'observacao',
+  'valor estimado':'__valor', 'abertura':'__data_abertura',
+  'hora abertura':'hora_abertura', 'prazo':'__prazo',
+  'site 1':'link_site_1', 'site 2':'link_site_2', 'anexos':'link_anexos',
+  'documento':'documento', 'situacao':'situacao', 'atualizada em':'__atualizada'
+};
+function clean(v){
+  if(v==null) return null;
+  const s = String(v).trim();
+  if(s==='' || norm(s)==='nao informado') return null;
+  return s;
+}
+function dataISO(v){
+  const s = clean(v); if(!s) return null;
+  const m = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+function valor(v){
+  const s = clean(v); if(!s) return null;
+  const t = s.replace(/[^\d,.]/g,'').replace(/\./g,'').replace(',','.');
+  const n = parseFloat(t); return isNaN(n) ? null : n;
+}
+
+function handleFile(f){
+  el('appErr').textContent=''; el('result').classList.add('hidden');
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+      if(!rows.length){ throw new Error('Planilha vazia'); }
+      const header = rows[0].map(norm);
+      const idx = {}; header.forEach((h,i)=>{ if(MAP[h]) idx[MAP[h]] = i; });
+      if(idx['numero_conlicitacao']==null){
+        throw new Error('Não achei a coluna "Número ConLicitação". É o Excel do ConLicitação?');
+      }
+      lote = [];
+      for(let r=1; r<rows.length; r++){
+        const row = rows[r];
+        const num = clean(row[idx['numero_conlicitacao']]);
+        if(!num) continue;
+        const o = { numero_conlicitacao:num, fonte:'conlicitacao' };
+        for(const key in idx){
+          if(key==='numero_conlicitacao') continue;
+          const raw = row[idx[key]];
+          if(key==='__valor') o.valor_estimado = valor(raw);
+          else if(key==='__data_abertura') o.data_abertura = dataISO(raw);
+          else if(key==='__prazo') o.prazo_propostas = dataISO(raw);
+          else if(key==='__atualizada') o.atualizada_em_fonte = dataISO(raw);
+          else { const c = clean(raw); if(c!=null) o[key]=c; }
+        }
+        Object.keys(o).forEach(k=> o[k]==null && delete o[k]);
+        lote.push(o);
+      }
+      el('fileInfo').innerHTML = `<b>${f.name}</b> — ${lote.length} licitação(ões) lida(s).`;
+      el('ingBtn').disabled = lote.length===0;
+    }catch(err){ el('appErr').textContent = err.message; el('ingBtn').disabled = true; }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+// ---------- ingestão ----------
+el('ingBtn').onclick = async ()=>{
+  if(!lote || !lote.length) return;
+  el('appErr').textContent=''; el('result').classList.add('hidden');
+  el('ingBtn').disabled = true; el('ingBtn').textContent = 'Ingerindo...';
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_ingerir_licitacoes`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey: SUPABASE_ANON_KEY,
+                Authorization:`Bearer ${accessToken}` },
+      body: JSON.stringify({ p_lote: lote })
+    });
+    const data = await res.json();
+    if(!res.ok){ throw new Error(data.message || data.hint || 'Erro na ingestão'); }
+    renderResult(data);
+  }catch(e){ el('appErr').textContent = e.message; }
+  finally{ el('ingBtn').disabled = false; el('ingBtn').textContent = 'Ingerir licitações'; }
+};
+
+function renderResult(d){
+  const filtradas = (d.filtrados_ids||[]).map(x=>{
+    const [n,motivo] = String(x).split(':'); return `${n} <span class="muted">(${motivo||'filtro'})</span>`;
+  });
+  el('result').innerHTML = `
+    <div class="stat"><span>Recebidas</span><b>${d.total_recebido??0}</b></div>
+    <div class="stat"><span><span class="pill g">novas</span> inseridas</span><b>${d.inseridos??0}</b></div>
+    <div class="stat"><span><span class="pill i">atualizadas</span> já existiam</span><b>${d.atualizados??0}</b></div>
+    <div class="stat"><span><span class="pill a">filtradas</span> fora do perfil</span><b>${d.filtrados_automatico??0}</b></div>
+    <div class="stat"><span>Erros</span><b>${d.erros??0}</b></div>
+    ${filtradas.length ? `<details><summary>Ver filtradas (${filtradas.length})</summary>
+       <div class="muted" style="margin-top:8px;line-height:1.9">${filtradas.join('<br>')}</div></details>` : ''}
+    <p class="muted" style="margin-top:14px">Pronto. Abra o Radar para ver as novas.</p>`;
+  el('result').classList.remove('hidden');
+}
+
+function el(id){ return document.getElementById(id); }
+boot();
+</script>
+</body>
+</html>
