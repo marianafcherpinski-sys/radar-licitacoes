@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acesso liberado - Radar de Licitações</title>
+<style>
+  :root {
+    --bg: #fafaf9; --surface: #ffffff; --border: #e7e5e4;
+    --text: #1c1917; --muted: #78716c;
+    --accent: #15803d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 32px; width: 100%; max-width: 420px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .selo { width: 44px; height: 44px; border-radius: 50%; background: #dcfce7; color: var(--accent); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .box h1 { margin: 0 0 4px; font-size: 20px; }
+  .box p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+  ol.passos { margin: 0 0 24px; padding-left: 0; list-style: none; counter-reset: p; }
+  ol.passos li { position: relative; padding: 0 0 14px 34px; counter-increment: p; }
+  ol.passos li:before { content: counter(p); position: absolute; left: 0; top: -1px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  ol.passos li:last-child { padding-bottom: 0; }
+  ol.passos b { font-weight: 600; }
+  a.botao { display: block; text-align: center; padding: 12px; background: var(--accent); color: #fff; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; }
+  p.rodape { margin: 18px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+  p.jatem { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="selo" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h1>Pagamento confirmado</h1>
+    <p class="sub">Radar de Licitações &middot; Cherpinski Engenharia</p>
+
+    <ol class="passos">
+      <li>Seu <b>acesso foi liberado</b>. Ele vale pelo período do plano que você comprou.</li>
+      <li>Em instantes você recebe um <b>e-mail para criar sua senha</b>. Se não achar, olhe a caixa de spam.</li>
+      <li>Depois de criar a senha, <b>entre no Radar</b> com seu e-mail e a senha que você definiu.</li>
+    </ol>
+
+    <a class="botao" href="https://radar.cherpinskiengenharia.com">Ir para o Radar</a>
+
+    <p class="jatem">Já tem conta no Radar? É só entrar direto com seu e-mail e senha.</p>
+    <p class="rodape">Qualquer dúvida, responda o e-mail da sua compra que a gente te ajuda.</p>
+  </div>
+</body>
+</html>
