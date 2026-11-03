@@ -89,7 +89,8 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+  onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';document.head.appendChild(s);"></script>
 <script>
 const SUPABASE_URL = 'https://dgfspbqeffhlildpzskh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZnNwYnFlZmZobGlsZHB6c2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTI3MTMsImV4cCI6MjA5NDc4ODcxM30.ZR1QgmahWCZ4KEqd1UUUNg2n1o5T-ar5VvHXGXiuLAc';
@@ -195,6 +196,10 @@ function valor(v){
 
 function handleFile(f){
   el('appErr').textContent=''; el('result').classList.add('hidden');
+  if(typeof XLSX === 'undefined'){
+    el('appErr').textContent = 'A leitura do Excel ainda está carregando. Aguarde 2 segundos e tente de novo, ou recarregue a página.';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = e=>{
     try{
