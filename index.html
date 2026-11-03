@@ -364,6 +364,11 @@ const STATUS_DEFAULT = 'captada';
 // movido_crm: gravado pelo cherpinski-os ao importar a licitação para o CRM.
 // Entra em FINALIZADOS para sumir da lista principal, igual ao "sem interesse".
 const STATUS_FINALIZADOS = ['ganho', 'perdido', 'arquivada', 'sem_interesse', 'movido_crm'];
+// "Movido para o CRM" só existe para a dona do workspace (é o cherpinski-os
+// que grava, e só na linha dela). Alunos não veem a opção nem no filtro nem
+// no seletor de status da licitação.
+const CRM_OWNER_ID = '3367c159-dc2d-438e-ac01-959b257a2acb';
+function veStatusCRM() { return userId === CRM_OWNER_ID; }
 const STATUS_LABELS = {
   captada: 'Captada',
   triada: 'Triada',
@@ -536,6 +541,7 @@ async function enterApp() {
   document.getElementById('expiredScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderSaudacao();
+  if (!veStatusCRM()) document.querySelector('#filtroStatus option[value="movido_crm"]')?.remove();
   init();
   // Carrega o nome em segundo plano e atualiza a saudação quando chegar
   fetchUserName().then(renderSaudacao);
@@ -971,7 +977,9 @@ function scoreBadge(s) {
 // Dropdown inline de status
 function statusDropdown(licitacaoId) {
   const stAtual = statusMap[licitacaoId] || STATUS_DEFAULT;
-  const opts = Object.entries(STATUS_LABELS).map(([k, label]) =>
+  const opts = Object.entries(STATUS_LABELS)
+    .filter(([k]) => k !== 'movido_crm' || veStatusCRM() || stAtual === 'movido_crm')
+    .map(([k, label]) =>
     `<option value="${k}" ${k === stAtual ? 'selected' : ''}>${label}</option>`
   ).join('');
   return `<select class="status-select st-${stAtual}" data-lic-id="${licitacaoId}"
