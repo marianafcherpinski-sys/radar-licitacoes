@@ -257,18 +257,27 @@ el('ingBtn').onclick = async ()=>{
 };
 
 function renderResult(d){
+  const total = d.total_recebido??0;
+  const ins = d.inseridos??0, atu = d.atualizados??0;
+  const filt = d.filtrados_automatico??0, lixo = d.em_lixo_ingestao??0, err = d.erros??0;
+  // o que sobra já estava no Radar sem nenhuma mudança
+  const semMudanca = Math.max(0, total - ins - atu - filt - lixo - err);
   const filtradas = (d.filtrados_ids||[]).map(x=>{
     const [n,motivo] = String(x).split(':'); return `${n} <span class="muted">(${motivo||'filtro'})</span>`;
   });
+  const linha = (label, valor, pill) => valor>0 || label==='Recebidas'
+    ? `<div class="stat"><span>${pill?`<span class="pill ${pill}">${pill==='g'?'novas':pill==='i'?'atualizadas':'filtradas'}</span> `:''}${label}</span><b>${valor}</b></div>` : '';
   el('result').innerHTML = `
-    <div class="stat"><span>Recebidas</span><b>${d.total_recebido??0}</b></div>
-    <div class="stat"><span><span class="pill g">novas</span> inseridas</span><b>${d.inseridos??0}</b></div>
-    <div class="stat"><span><span class="pill i">atualizadas</span> já existiam</span><b>${d.atualizados??0}</b></div>
-    <div class="stat"><span><span class="pill a">filtradas</span> fora do perfil</span><b>${d.filtrados_automatico??0}</b></div>
-    <div class="stat"><span>Erros</span><b>${d.erros??0}</b></div>
-    ${filtradas.length ? `<details><summary>Ver filtradas (${filtradas.length})</summary>
+    <div class="stat"><span><b>Recebidas</b></span><b>${total}</b></div>
+    ${linha('inseridas', ins, 'g')}
+    ${linha('tinham mudança e foram atualizadas', atu, 'i')}
+    ${semMudanca>0 ? `<div class="stat"><span>já estavam no Radar (sem mudança)</span><b>${semMudanca}</b></div>`:''}
+    ${linha('fora do perfil (descartadas)', filt, 'a')}
+    ${lixo>0 ? `<div class="stat"><span>já descartadas antes</span><b>${lixo}</b></div>`:''}
+    ${err>0 ? `<div class="stat"><span>Erros</span><b>${err}</b></div>`:''}
+    ${filtradas.length ? `<details><summary>Ver descartadas desta vez (${filtradas.length})</summary>
        <div class="muted" style="margin-top:8px;line-height:1.9">${filtradas.join('<br>')}</div></details>` : ''}
-    <p class="muted" style="margin-top:14px">Pronto. Abra o Radar para ver as novas.</p>`;
+    <p class="muted" style="margin-top:14px">${ins>0?'Pronto. Abra o Radar para ver as novas.':'Nada novo neste arquivo: tudo isto já estava no Radar.'}</p>`;
   el('result').classList.remove('hidden');
 }
 
