@@ -44,6 +44,8 @@
   header .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
   header .right { display: flex; gap: 8px; align-items: center; }
   header .user-info { font-size: 12px; color: var(--muted); margin-right: 8px; }
+  header .acesso-validade { font-size: 12px; color: var(--accent); background: var(--accent-soft); padding: 3px 9px; border-radius: 999px; margin-right: 8px; white-space: nowrap; }
+  header .acesso-validade.alerta { color: var(--warn); background: var(--warn-soft); }
   header button { padding: 7px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
   header button:hover { background: var(--bg); }
 
@@ -250,6 +252,7 @@
   </div>
   <div class="right">
     <span class="user-info" id="userEmail"></span>
+    <span class="acesso-validade" id="acessoValidade" style="display:none"></span>
     <button onclick="reload()">↻ Recarregar</button>
     <button onclick="doLogout()">Sair</button>
   </div>
@@ -486,6 +489,19 @@ function renderSaudacao() {
   }
 }
 
+// Validade do acesso, mostrada como selo no cabeçalho. Verde normal; âmbar quando faltam 7 dias ou menos.
+let acessoFim = null;
+function renderValidade() {
+  const el = document.getElementById('acessoValidade');
+  if (!el) return;
+  if (!acessoFim) { el.style.display = 'none'; return; }
+  const dias = Math.ceil((acessoFim - new Date()) / 86400000);
+  el.textContent = `Acesso até ${acessoFim.toLocaleDateString('pt-BR')}`;
+  el.classList.toggle('alerta', dias <= 7);
+  el.title = dias >= 0 ? `Faltam ${dias} dia(s) de acesso` : 'Acesso vencido';
+  el.style.display = '';
+}
+
 // Link de renovação: abre o WhatsApp da Cherpinski com mensagem pronta.
 const WHATSAPP_RENOVACAO = '5542988635363';
 
@@ -540,7 +556,9 @@ async function enterApp() {
   if (!acesso.ok) { showExpired(acesso); return; }
   document.getElementById('expiredScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  acessoFim = acesso.fim || null;
   renderSaudacao();
+  renderValidade();
   if (!veStatusCRM()) document.querySelector('#filtroStatus option[value="movido_crm"]')?.remove();
   init();
   // Carrega o nome em segundo plano e atualiza a saudação quando chegar
