@@ -3,140 +3,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radar de Licitações - Planos</title>
+<title>Radar de Licitações · Planos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=DM+Mono:wght@500&display=swap">
 <style>
+  /* Página de vendas do Radar de Licitações.
+     Identidade da marca: pedra clara + verde único acento + DM Sans. */
   :root{
-    --bg:#FAF9F6; --surface:#FFFFFF; --border:#E6E3DC;
+    --bg:#FAF9F6; --surface:#FFFFFF; --surface-warm:#F5F3EC; --border:#E6E3DC; --border-soft:#EFEDE6;
     --text:#18170F; --muted:#5C5A52; --muted2:#9B9890;
-    --accent:#15803d; --accent-soft:#dcfce7;
+    --accent:#15803D; --accent-ink:#116330; --accent-soft:#DCFCE7; --accent-wash:#F0F8F2;
+    --sans:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    color-scheme:light;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    font-size:15px;line-height:1.55}
-  .wrap{max-width:960px;margin:0 auto;padding:16px}
-  /* HERO */
-  .hero{text-align:center;padding:48px 8px 8px}
-  .hero h1{font-size:28px;margin:0 0 12px}
-  .hero p{color:var(--muted);font-size:16px;max-width:620px;margin:0 auto}
-  .hero .para-quem{color:var(--muted2);font-size:13px;margin-top:14px}
-  /* SEÇÕES */
-  section{margin:40px 0}
-  .titulo{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
-    color:var(--accent);text-align:center;margin:0 0 20px}
-  .recebe{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 28px;max-width:720px;margin:0 auto}
-  .recebe li{list-style:none;padding:2px 0 2px 28px;position:relative;font-size:15px}
-  .recebe li::before{content:"";position:absolute;left:2px;top:7px;width:14px;height:8px;
-    border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
-  .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:760px;margin:0 auto}
-  .passo{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
-  .passo .n{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
-    font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
-  .passo p{margin:0;font-size:14px;color:var(--muted)}
-  /* PLANOS */
-  .planos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;max-width:860px;margin:0 auto}
-  .plano{background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:24px 20px;display:flex;flex-direction:column;position:relative}
-  .plano.destaque{border-color:var(--accent);box-shadow:0 2px 14px rgba(21,128,61,.12)}
-  .tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
-    background:var(--accent);color:#fff;font-size:11px;font-weight:600;
-    text-transform:uppercase;letter-spacing:.04em;padding:4px 12px;border-radius:999px;white-space:nowrap}
-  .periodo{font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-  .preco{font-size:32px;font-weight:700;margin:10px 0 2px}
-  .preco small{font-size:16px;font-weight:600;color:var(--muted)}
-  .mes{color:var(--muted);font-size:13px;margin-bottom:18px}
-  .plano ul{list-style:none;padding:0;margin:0 0 22px;flex:1}
-  .plano li{padding:6px 0 6px 24px;position:relative;font-size:14px}
-  .plano li::before{content:"";position:absolute;left:0;top:9px;width:14px;height:8px;
-    border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
-  .assinar{display:block;text-align:center;background:var(--accent);color:#fff;
-    text-decoration:none;font-weight:600;font-size:15px;padding:13px;border-radius:8px}
-  .assinar.outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-  .rodape{text-align:center;color:var(--muted);font-size:13px;margin:34px 0 48px}
-  .rodape a{color:var(--accent)}
-  @media(max-width:720px){
-    .recebe,.passos,.planos{grid-template-columns:1fr}
-    .hero{padding-top:32px} .hero h1{font-size:24px}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{width:100%;max-width:1040px;margin-inline:auto;padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px))}
+  h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+  p{margin:0}
+  a{color:inherit;text-decoration:none}
+
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.11em;color:var(--accent-ink);background:var(--accent-wash);border:1px solid #D5EBDD;padding:7px 15px;border-radius:999px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(21,128,61,.14)}
+  .acc{color:var(--accent-ink);font-style:italic;font-weight:500}
+  .lead{color:var(--muted);font-size:clamp(16px,2vw,19px);line-height:1.56}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:var(--sans);font-weight:600;font-size:16px;padding:15px 28px;border-radius:999px;transition:transform .14s ease,box-shadow .14s ease;cursor:pointer}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 8px 22px rgba(21,128,61,.18)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(21,128,61,.24)}
+  .btn-ghost{border:1px solid var(--border);color:var(--text);background:var(--surface)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+  .topbar{border-bottom:1px solid var(--border-soft);background:rgba(250,249,246,.85);backdrop-filter:blur(8px)}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;padding-block:15px;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand .d{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+  .topbar .t{font-size:13px;color:var(--muted)}
+
+  .hero .wrap{display:grid;grid-template-columns:1.08fr .92fr;gap:48px;align-items:center;padding-block:70px 78px}
+  .hero h1{font-size:clamp(38px,5.4vw,60px);margin-top:22px}
+  .hero .lead{margin-top:22px;max-width:36ch}
+  .cta-row{display:flex;flex-wrap:wrap;gap:13px;margin-top:30px;align-items:center}
+  .trust{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:30px;padding-top:24px;border-top:1px solid var(--border-soft);font-size:14px;color:var(--muted)}
+  .trust b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+
+  .radar{position:relative;aspect-ratio:1;max-width:400px;width:100%;margin-inline:auto;display:flex;align-items:center;justify-content:center;
+     background:radial-gradient(circle at 50% 46%, #fff, var(--surface-warm) 72%);border-radius:50%;box-shadow:0 30px 70px -30px rgba(21,128,61,.28), inset 0 0 0 1px var(--border-soft)}
+  .radar .ring{position:absolute;border-radius:50%;border:1px solid rgba(21,128,61,.22)}
+  .radar .r1{inset:9%}.radar .r2{inset:24%;border-color:rgba(21,128,61,.3)}.radar .r3{inset:39%;border-color:rgba(21,128,61,.42)}
+  .radar .cross{position:absolute;background:rgba(21,128,61,.12)}
+  .radar .cx{left:9%;right:9%;height:1px}.radar .cy{top:9%;bottom:9%;width:1px}
+  .radar .sweep{position:absolute;inset:9%;border-radius:50%;background:conic-gradient(from 0deg, rgba(21,128,61,0) 0deg, rgba(21,128,61,.16) 48deg, rgba(21,128,61,0) 68deg);animation:spin 5s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(prefers-reduced-motion:reduce){.radar .sweep{animation:none}}
+  .radar .core{width:14%;height:14%;border-radius:50%;background:radial-gradient(circle at 42% 36%, #35c46a, var(--accent));box-shadow:0 0 0 7px rgba(21,128,61,.1),0 6px 18px rgba(21,128,61,.35)}
+  .radar .blip{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(21,128,61,.14)}
+  .radar .p1{top:26%;left:33%}.radar .p2{top:38%;right:24%}.radar .p3{bottom:30%;left:40%}.radar .p4{top:58%;left:22%}
+  .radar .chip{position:absolute;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:999px;padding:7px 13px;box-shadow:0 6px 18px -8px rgba(24,23,15,.22)}
+  .radar .chip .cd{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .radar .c1{top:4%;right:-2%}.radar .c2{bottom:6%;left:-6%}
+
+  section{padding-block:64px;border-top:1px solid var(--border-soft)}
+  .sec-eyebrow{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-ink)}
+  section h2{font-size:clamp(27px,3.6vw,40px);margin-top:14px}
+  section .intro{margin-top:16px;max-width:62ch}
+
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:38px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px}
+  .card .ic{width:40px;height:40px;border-radius:11px;background:var(--accent-wash);border:1px solid #D5EBDD;display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:var(--mono);font-size:15px}
+  .card h3{font-size:18px;font-weight:600;margin-top:16px}
+  .card p{color:var(--muted);font-size:14.5px;margin-top:8px}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:38px}
+  .step{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 24px}
+  .step .num{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .step h3{font-size:17px;font-weight:600;margin-top:16px}
+  .step p{color:var(--muted);font-size:14.5px;margin-top:6px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:38px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 24px;text-align:center}
+  .stat .big{font-size:clamp(42px,6vw,58px);font-weight:700;color:var(--accent-ink);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .stat .t{color:var(--muted);font-size:14px;margin-top:10px}
+
+  .list{list-style:none;padding:0;margin:30px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:14px 30px}
+  .list li{position:relative;padding-left:32px;font-size:16px}
+  .list li::before{content:"";position:absolute;left:5px;top:7px;width:14px;height:8px;border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
+
+  .peek{margin-top:38px}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 34px 64px -34px rgba(24,23,15,.28)}
+  .frame .bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--surface-warm);border-bottom:1px solid var(--border)}
+  .frame .bar .fd{width:10px;height:10px;border-radius:50%;background:#D9D5CC}
+  .frame .bar .url{margin-left:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+  .pan{padding:20px}
+  .pan .ptitle{font-weight:700;font-size:15px;margin-bottom:14px}
+  .pan .pstats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .pstat{border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .pstat .k{font-size:10.5px;letter-spacing:.07em;color:var(--muted2);text-transform:uppercase}
+  .pstat .v{font-size:24px;font-weight:700;margin-top:3px;line-height:1}
+  .pfilters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .pfilters .f{font-size:12px;color:var(--muted);background:var(--surface-warm);border:1px solid var(--border);border-radius:8px;padding:6px 11px}
+  .ptwrap{width:100%}
+  .ptable{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ptable th{text-align:left;color:var(--muted2);font-weight:600;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:0 10px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
+  .ptable td{padding:11px 10px;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text)}
+  .ptag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.03em;padding:3px 8px;border-radius:6px;background:var(--surface-warm);border:1px solid var(--border);color:var(--muted);text-transform:uppercase}
+  .ptag.on{background:var(--accent-wash);border-color:#D5EBDD;color:var(--accent-ink)}
+  .pserv{display:inline-block;font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent-wash);border:1px solid #D5EBDD;border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .pdata{font-weight:600;white-space:nowrap}
+  .pdata.on{color:var(--accent-ink)}
+  .peek .cap{margin-top:14px;font-size:13px;color:var(--muted2);text-align:center}
+
+  .assin{display:flex;align-items:center;gap:10px;margin-top:22px;font-weight:600}
+  .assin .d{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+
+  .planos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px;align-items:stretch}
+  .plano{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 26px;display:flex;flex-direction:column;position:relative}
+  .plano.destaque{border-color:var(--accent);box-shadow:0 18px 40px -20px rgba(21,128,61,.35)}
+  .plano .tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:5px 14px;border-radius:999px;white-space:nowrap}
+  .plano .per{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .plano .preco{font-size:46px;font-weight:700;letter-spacing:-.03em;margin:12px 0 2px;line-height:1}
+  .plano .preco small{font-size:20px;font-weight:600;color:var(--muted)}
+  .plano .mes{color:var(--muted);font-size:13.5px;margin-bottom:22px}
+  .plano ul{list-style:none;padding:0;margin:0 0 26px;flex:1;display:flex;flex-direction:column;gap:11px}
+  .plano li{position:relative;padding-left:26px;font-size:14.5px}
+  .plano li::before{content:"";position:absolute;left:0;top:7px;width:13px;height:7px;border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
+
+  .faq{margin-top:38px;display:flex;flex-direction:column;gap:13px}
+  .qa{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px}
+  .qa h3{font-size:16.5px;font-weight:600}
+  .qa p{color:var(--muted);font-size:14.5px;margin-top:8px}
+
+  .final{text-align:center;position:relative}
+  .final .wrap{padding-block:72px}
+  .final h2{font-size:clamp(28px,4.4vw,44px)}
+  .final .lead{margin:18px auto 0;max-width:46ch}
+  .final .cta-row{justify-content:center}
+  .final .entrar{margin-top:22px;font-size:14px;color:var(--muted)}
+  .final .entrar a{color:var(--accent-ink);font-weight:600}
+
+  footer{border-top:1px solid var(--border-soft);color:var(--muted2);font-size:13px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;padding-block:28px}
+  footer a{color:var(--accent-ink);font-weight:600}
+  footer .fl{display:flex;gap:14px}
+
+  @media(max-width:860px){
+    .hero .wrap{grid-template-columns:1fr;padding-block:48px 56px;gap:40px}
+    .radar{order:-1;max-width:290px}
+    .grid3,.steps,.stats,.planos{grid-template-columns:1fr}
+    .list{grid-template-columns:1fr}
+    .pan{overflow-x:auto} .ptable{min-width:620px} .frame .bar .url{max-width:none}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="hero">
-    <h1>Radar de Licitações</h1>
-    <p>As licitações de avaliação de imóveis e laudos técnicos de todo o Brasil, reunidas, filtradas e organizadas. Sem caçar edital em dezenas de portais.</p>
-    <p class="para-quem">Feito para engenheiros civis, arquitetos e empresas que trabalham com avaliação de imóveis e laudos.</p>
-  </div>
+<div class="topbar"><div class="wrap">
+  <span class="brand"><span class="d"></span> Radar de Licitações</span>
+  <span class="t">Avaliação de imóveis e laudos, do Brasil inteiro, num lugar só.</span>
+</div></div>
 
-  <section>
-    <h2 class="titulo">O que você recebe</h2>
-    <ul class="recebe">
-      <li>Licitações de avaliação de imóveis e laudos técnicos, de todo o Brasil, em um só lugar.</li>
-      <li>Já filtradas: o que não tem a ver com avaliação ou laudo fica de fora.</li>
-      <li>Cada licitação com órgão, cidade, objeto, data de abertura e prazo.</li>
-      <li>Filtro por estado, prazo e tipo de serviço.</li>
-      <li>Destaque das que abrem nos próximos 7 dias.</li>
-      <li>Busca por objeto, órgão ou cidade.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2 class="titulo">Como funciona</h2>
-    <div class="passos">
-      <div class="passo"><div class="n">1</div><p>Você assina o plano que preferir.</p></div>
-      <div class="passo"><div class="n">2</div><p>Recebe um e-mail para criar sua senha.</p></div>
-      <div class="passo"><div class="n">3</div><p>Entra no Radar e acompanha as licitações.</p></div>
+<header class="hero"><div class="wrap">
+  <div>
+    <span class="eyebrow"><span class="dot"></span> Feito por quem vive de avaliação</span>
+    <h1>Pare de garimpar edital. <span class="acc">Comece a escolher.</span></h1>
+    <p class="lead">O Radar reúne as licitações de avaliação de imóveis e laudos técnicos de todo o Brasil, já filtradas e organizadas. Em vez de caçar em dezenas de portais, você abre e vê o que é do seu nicho.</p>
+    <div class="cta-row">
+      <a href="#planos" class="btn btn-primary">Ver os planos</a>
+      <a href="#como" class="btn btn-ghost">Como funciona</a>
     </div>
-  </section>
+    <div class="trust">
+      <span><b>756</b> editais no radar</span>
+      <span><b>26</b> estados</span>
+      <span>a partir de <b>R$&nbsp;97</b></span>
+    </div>
+  </div>
+  <div class="radar" aria-hidden="true">
+    <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+    <span class="cross cx"></span><span class="cross cy"></span>
+    <span class="sweep"></span>
+    <span class="blip p1"></span><span class="blip p2"></span><span class="blip p3"></span><span class="blip p4"></span>
+    <span class="core"></span>
+    <span class="chip c1"><span class="cd"></span> Avaliação · SC</span>
+    <span class="chip c2"><span class="cd"></span> Laudo · MG</span>
+  </div>
+</div></header>
 
-  <section>
-    <h2 class="titulo">Escolha o período de acesso</h2>
+<main>
+  <section id="dor"><div class="wrap">
+    <span class="sec-eyebrow">O problema</span>
+    <h2>Achar licitação de avaliação dá trabalho.</h2>
+    <p class="intro lead">Cada órgão publica no seu portal, cada um de um jeito. Você abre uma pilha de abas, filtra edital na mão, e vez ou outra acha um bom tarde demais. É tempo que ninguém devia estar perdendo.</p>
+  </div></section>
+
+  <section id="como"><div class="wrap">
+    <span class="sec-eyebrow">Como funciona</span>
+    <h2>Simples assim.</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Você assina</h3><p>Escolhe por quanto tempo quer acesso e entra.</p></div>
+      <div class="step"><div class="num">2</div><h3>Recebe a senha</h3><p>Um e-mail pra criar sua senha e abrir o Radar.</p></div>
+      <div class="step"><div class="num">3</div><h3>Acompanha</h3><p>Filtra por estado, prazo e tipo, e vê o que é do seu nicho.</p></div>
+    </div>
+  </div></section>
+
+  <section id="recebe"><div class="wrap">
+    <span class="sec-eyebrow">O que você recebe</span>
+    <h2>Tudo num lugar só.</h2>
+    <div class="grid3">
+      <div class="card"><div class="ic">01</div><h3>Brasil inteiro, filtrado</h3><p>As licitações de avaliação e laudo de todo o país, já separadas do que não interessa.</p></div>
+      <div class="card"><div class="ic">02</div><h3>Cada uma com o essencial</h3><p>Órgão, cidade, objeto, data de abertura e prazo, sem abrir o edital.</p></div>
+      <div class="card"><div class="ic">03</div><h3>Filtros e destaque</h3><p>Por estado, prazo e tipo. As que abrem na semana ficam em destaque.</p></div>
+    </div>
+  </div></section>
+
+  <section id="pordentro"><div class="wrap">
+    <span class="sec-eyebrow">Veja por dentro</span>
+    <h2>É isso que você abre.</h2>
+    <p class="intro lead">O painel do Radar: as licitações numa tabela só, com filtro por estado, prazo e tipo. As que abrem logo ficam em destaque.</p>
+    <div class="peek">
+      <div class="frame">
+        <div class="bar"><span class="fd"></span><span class="fd"></span><span class="fd"></span><span class="url">Radar de Licitações</span></div>
+        <div class="pan">
+          <div class="ptitle">Radar de Licitações</div>
+          <div class="pstats">
+            <div class="pstat"><div class="k">Total carregado</div><div class="v">759</div></div>
+            <div class="pstat"><div class="k">Próximas · 7 dias</div><div class="v">11</div></div>
+          </div>
+          <div class="pfilters"><span class="f">Tipo de contratação</span><span class="f">Todos UF</span><span class="f">Tipo de serviço</span><span class="f">Todos prazos</span><span class="f">Todos status</span></div>
+          <div class="ptwrap"><table class="ptable">
+            <thead><tr><th>Tipo</th><th>Órgão</th><th>Cidade</th><th>UF</th><th>Edital</th><th>Tipo de serviço</th><th>Abertura</th></tr></thead>
+            <tbody>
+              <tr><td><span class="ptag">Outro</span></td><td>Universidade Estadual de Maringá</td><td>Maringá</td><td>PR</td><td>281/2026</td><td><span class="pserv">Avaliação Imobiliária</span></td><td class="pdata on">Abre hoje</td></tr>
+              <tr><td><span class="ptag on">Pregão</span></td><td>Governo do Estado</td><td>Rio de Janeiro</td><td>RJ</td><td>PE/959/2026</td><td><span class="pserv">Avaliação Imobiliária</span></td><td class="pdata on">Abre amanhã</td></tr>
+              <tr><td><span class="ptag">Outro</span></td><td>Município de Votuporanga</td><td>Votuporanga</td><td>SP</td><td>033/2026</td><td><span class="pserv">Avaliação Imobiliária</span></td><td class="pdata on">Abre amanhã</td></tr>
+              <tr><td><span class="ptag on">Pregão</span></td><td>Prefeitura Municipal</td><td>Quedas do Iguaçu</td><td>PR</td><td>PE/59/2026</td><td><span class="pserv">Outros</span></td><td class="pdata on">Abre amanhã</td></tr>
+              <tr><td><span class="ptag">Outro</span></td><td>Inst. de Planej. e Desenv. de Araxá</td><td>Araxá</td><td>MG</td><td>02/2026</td><td><span class="pserv">Avaliação Imobiliária</span></td><td class="pdata">Em 2 dias</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+      <p class="cap">Exemplo ilustrativo do painel do Radar, com licitações reais.</p>
+    </div>
+  </div></section>
+
+  <section id="prova"><div class="wrap">
+    <span class="sec-eyebrow">O que tem lá dentro</span>
+    <h2>Agora, no Radar.</h2>
+    <div class="stats">
+      <div class="stat"><div class="big">756</div><div class="t">editais no radar</div></div>
+      <div class="stat"><div class="big">26</div><div class="t">estados cobertos</div></div>
+      <div class="stat"><div class="big">87</div><div class="t">com prazo em aberto</div></div>
+    </div>
+  </div></section>
+
+  <section id="paraquem"><div class="wrap">
+    <span class="sec-eyebrow">Para quem é</span>
+    <h2>Feito pra quem vive de avaliação.</h2>
+    <ul class="list">
+      <li>Engenheiros civis que fazem avaliação de imóveis</li>
+      <li>Arquitetos e empresas que fazem laudo técnico</li>
+      <li>Escritórios sem equipe pra garimpar edital</li>
+      <li>Quem está começando e não sabe onde achar licitação do nicho</li>
+    </ul>
+  </div></section>
+
+  <section id="criadora"><div class="wrap" style="max-width:720px;text-align:center">
+    <span class="sec-eyebrow">Quem construiu</span>
+    <h2>Construído por quem vive de avaliação.</h2>
+    <p class="lead" style="margin:18px auto 0;max-width:52ch">Eu também trabalho com avaliação de imóveis e laudos. Cansei de perder tempo garimpando edital em vários portais e construí uma ferramenta pra resolver o meu próprio problema. Deu certo, e abri pra quem é da área.</p>
+    <p class="lead" style="margin:14px auto 0;max-width:52ch">O Radar resolve a parte chata, que é achar a licitação. O resto é com você.</p>
+    <div class="assin" style="justify-content:center"><span class="d"></span> M.B. Gestão e Soluções Ltda</div>
+  </div></section>
+
+  <section id="planos"><div class="wrap">
+    <span class="sec-eyebrow">Planos</span>
+    <h2>Escolha o seu acesso.</h2>
+    <p class="intro lead">Quanto maior o período, menor o preço por mês. Pagamento seguro pela Kiwify, com cartão, Pix ou boleto. Depois da compra, o acesso cai no seu e-mail.</p>
     <div class="planos">
       <div class="plano">
-        <span class="periodo">30 dias</span>
+        <span class="per">30 dias</span>
         <div class="preco"><small>R$</small> 97</div>
         <div class="mes">equivale a R$ 97 por mês</div>
-        <ul>
-          <li>Acesso completo por 30 dias</li>
-          <li>Todas as licitações filtradas</li>
-          <li>Filtro por estado, prazo e tipo</li>
-        </ul>
-        <a class="assinar outline" href="https://pay.kiwify.com.br/3ScmLTC">Assinar 30 dias</a>
+        <ul><li>Acesso completo por 30 dias</li><li>Todas as licitações filtradas</li><li>Filtro por estado, prazo e tipo</li></ul>
+        <a class="btn btn-ghost" href="https://pay.kiwify.com.br/3ScmLTC">Assinar 30 dias</a>
       </div>
-
       <div class="plano">
-        <span class="periodo">90 dias</span>
+        <span class="per">90 dias</span>
         <div class="preco"><small>R$</small> 247</div>
         <div class="mes">equivale a R$ 82 por mês</div>
-        <ul>
-          <li>Acesso completo por 90 dias</li>
-          <li>Todas as licitações filtradas</li>
-          <li>Mais economia que o mensal</li>
-        </ul>
-        <a class="assinar outline" href="https://pay.kiwify.com.br/IjuQkP5">Assinar 90 dias</a>
+        <ul><li>Acesso completo por 90 dias</li><li>Todas as licitações filtradas</li><li>Mais economia que o mensal</li></ul>
+        <a class="btn btn-ghost" href="https://pay.kiwify.com.br/IjuQkP5">Assinar 90 dias</a>
       </div>
-
       <div class="plano destaque">
         <span class="tag">Melhor valor</span>
-        <span class="periodo">180 dias</span>
+        <span class="per">180 dias</span>
         <div class="preco"><small>R$</small> 397</div>
         <div class="mes">equivale a R$ 66 por mês</div>
-        <ul>
-          <li>Acesso completo por 180 dias</li>
-          <li>Todas as licitações filtradas</li>
-          <li>O menor preço por mês</li>
-        </ul>
-        <a class="assinar" href="https://pay.kiwify.com.br/iyse4oL">Assinar 180 dias</a>
+        <ul><li>Acesso completo por 180 dias</li><li>Todas as licitações filtradas</li><li>O menor preço por mês</li></ul>
+        <a class="btn btn-primary" href="https://pay.kiwify.com.br/iyse4oL">Assinar 180 dias</a>
       </div>
     </div>
-  </section>
+  </div></section>
 
-  <p class="rodape">
-    Pagamento seguro pela Kiwify (cartão, Pix ou boleto). Depois da compra, você recebe um e-mail para criar sua senha e já entra no Radar.<br>
-    Já é assinante? <a href="https://radar.cherpinskiengenharia.com">Entrar no Radar</a>
-  </p>
+  <section id="duvidas"><div class="wrap">
+    <span class="sec-eyebrow">Dúvidas</span>
+    <h2>O que costumam perguntar.</h2>
+    <div class="faq">
+      <div class="qa"><h3>O Radar participa da licitação por mim?</h3><p>Não. Ele resolve a parte de achar e filtrar a licitação certa. A proposta e a disputa continuam sendo suas.</p></div>
+      <div class="qa"><h3>De onde vêm as licitações?</h3><p>De fontes públicas, atualizadas. Cada uma vem com órgão, cidade, objeto, data e prazo, pra você conferir.</p></div>
+      <div class="qa"><h3>Como recebo o acesso depois de pagar?</h3><p>Chega um e-mail pra você criar a senha e entrar no Radar. O acesso vale pelo período do plano que você escolher.</p></div>
+      <div class="qa"><h3>Serve pra quem está começando?</h3><p>Sim. É justamente pra quem não sabe onde achar licitação do nicho e não tem equipe pra garimpar.</p></div>
+    </div>
+  </div></section>
 
-</div>
+  <section class="final"><div class="wrap">
+    <h2>As licitações do seu nicho já estão lá dentro.</h2>
+    <p class="lead">Pare de caçar edital em dezenas de portais. Abra o Radar e escolha.</p>
+    <div class="cta-row"><a href="#planos" class="btn btn-primary">Ver os planos</a></div>
+    <p class="entrar">Já é assinante? <a href="/">Entrar no Radar</a></p>
+  </div></section>
+</main>
+
+<footer><div class="wrap">
+  <span>Radar de Licitações · M.B. Gestão e Soluções Ltda</span>
+  <span class="fl"><a href="/privacidade.html">Política de Privacidade</a><a href="/termos.html">Termos de Uso</a></span>
+  <span>Pagamento seguro pela Kiwify · cartão, Pix ou boleto</span>
+</div></footer>
+
 </body>
 </html>
